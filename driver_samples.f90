@@ -197,19 +197,19 @@ program main
 
    call cpu_time(finish)
 
-   !call myfgh( need, nx, x, nf, nh, iusr, rusr, f, g, h )
+   call myfgh( need, nx, x, nf, nh, iusr, rusr, f, g, h )
 
-   !do ii = 1,100
+   do ii = 1,100
 
-   !  call cpu_time(start)
-   !  call isatab( idd,0,nx,x,nf,nh,nh, myfgh, iusr,rusr, info, rinfo, f,g,h,stats)
-   !  call cpu_time(finish)
-   !  print '("Time = ",e10.3," seconds.")',finish-start
+    call cpu_time(start)
+    call isatab( idd,0,nx,x,nf,nh,nh, myfgh, iusr,rusr, info, rinfo, f,g,h,stats)
+    call cpu_time(finish)
+    print '("Time = ",e10.3," seconds.")',finish-start
 
-   !  print *, f(1)*rusr(7+1)
-   !  print *, ii
+    print *, f(1)*rusr(7+1)
+    print *, ii
 
-   !end do
+   end do
 
 
 
