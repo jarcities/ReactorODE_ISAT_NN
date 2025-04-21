@@ -1,15 +1,11 @@
-﻿
-#!/bin/bash
-rm *.o
-rm *.mod
-rm main.exe
+﻿#!/bin/bash
 
 # COMMENT OUT IF NECESSARY
 # ml unload shared DefaultModules gcc/13.1.0 slurm/slurm/23.02.8 # FOR SDSU FERMI ONLY
 
 # SOURCE VARIABLES FROM INTEL ONEAPI
 # source ../../intel/oneapi/setvars.sh # FOR SDSU FERMI ONLY
-source $HOME/intel/oneapi/setvars.sh # FOR LOCAL LINUX ONLY
+# source $HOME/Code/intel/oneapi/setvars.sh # FOR LOCAL LINUX ONLY
  
 # USED A CONDA ENV WITH CANTERA INSTALLED IN ENV AND OTHER SELF ADDED PATHS
 #icpx -O3 -L../cantera/build/lib -I../cantera/include -c reactor.cpp -lcantera
@@ -21,5 +17,5 @@ ifx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -o main.exe driver_samples.f
 	-Bdynamic -qmkl -Wl,-rpath,$CONDA_PREFIX/lib
 
 # SOURCE VARIABLES AGIAN AND RUN EXE
-source ../../intel/oneapi/setvars.sh
+# source ../../intel/oneapi/setvars.sh
 ./main.exe
