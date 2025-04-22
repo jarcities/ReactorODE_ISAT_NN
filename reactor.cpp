@@ -377,6 +377,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         f[ii] = f[ii] - x[ii] - fnn[ii];
     }
 
+    // JACOBIAN STARTS HERE
+    // The Jacobian is calculated using finite differences. The Jacobian is a matrix of size nx by nx, where nx is the number of variables. The Jacobian is calculated using the function "myfnn" which calculates the function value at a given point. The Jacobian is calculated using central difference.
     if (need[1] == 1)
     {
 
@@ -440,6 +442,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
     }
+    // JACOBIAN ENDS HERE
 }
 
 void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[])
