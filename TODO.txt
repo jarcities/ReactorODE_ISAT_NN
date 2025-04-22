@@ -1,1 +1,3 @@
-1/ add back propagation to code
+TASK: Instead of central difference, use xm and xp use cantera's jacobian method. Then calculate fnn jacobian use back propagation, then add all up. 
+1/ Figure out canteras jacobian.
+2/ Figure out how to implement back propagation.

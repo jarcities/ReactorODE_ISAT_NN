@@ -377,72 +377,95 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         f[ii] = f[ii] - x[ii] - fnn[ii];
     }
 
-    // JACOBIAN STARTS HERE
-    // The Jacobian is calculated using finite differences. The Jacobian is a matrix of size nx by nx, where nx is the number of variables. The Jacobian is calculated using the function "myfnn" which calculates the function value at a given point. The Jacobian is calculated using central difference.
+    /*
+    |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+    
+    JACOBIAN STARTS HERE
+    If the Jacobian is needed (flag need[1] is set), compute it using central finite differences.
+    */
     if (need[1] == 1)
     {
+        // Allocate arrays to store perturbed inputs and corresponding function evaluations.
+        double xp[nx];  // x perturbed in the positive direction (x + dx)
+        double xm[nx];  // x perturbed in the negative direction (x - dx)
+        double fp[nf];  // Function f evaluated at xp
+        double fm[nf];  // Function f evaluated at xm
 
-        double xp[nx];
-        double xm[nx];
-        double fp[nf];
-        double fm[nf];
-
-        for (int ii = 0; ii < nx; ii++)
+        // Loop over each component of x to compute partial derivatives.
+        for (int i = 0; i < nx; i++)
         {
-
-            for (int jj = 0; jj < nx; jj++)
+            // Copy the original x into the temporary arrays.
+            for (int j = 0; j < nx; j++)
             {
-                xp[jj] = x[jj];
-                xm[jj] = x[jj];
+                xp[j] = x[j];
+                xm[j] = x[j];
             }
 
-            xp[ii] += dx;
-            xm[ii] -= dx;
+            // Apply perturbation: add dx to xp and subtract dx from xm at the i-th element.
+            xp[i] += dx;
+            xm[i] -= dx;
 
-            tnow = 0.0;
-            fromxhat(xp, ptcl, nx, rusr);
-            T[0] = ptcl[0];
-            for (int ii = 1; ii < nx; ii++)
+            // ------------------ Evaluate f at xp (x + dx) ------------------
+            tnow = 0.0;                          // Reset integration time.
+            fromxhat(xp, ptcl, nx, rusr);         // Convert xp from normalized to physical space.
+            T[0] = ptcl[0];                      // Extract temperature from ptcl.
+            for (int k = 1; k < nx; k++)          // Extract species values (skipping temperature).
             {
-                Y[ii - 1] = ptcl[ii];
+                Y[k - 1] = ptcl[k];
             }
-            gas->setState_TPY(T[0], p, Y);
-            integrator->initialize(tnow, odes);
-            integrator->integrate(dt);
-            solution = integrator->solution();
-            toxhat(solution, fp, nx, rusr);
-            myfnn(nx, xp, fnn);
-            for (int ii = 0; ii < nx; ii++)
+            gas->setState_TPY(T[0], p, Y);        // Update the gas state.
+            integrator->initialize(tnow, odes);    // (Re)initialize the integrator.
+            integrator->integrate(dt);             // Integrate the ODEs forward by dt.
+            solution = integrator->solution();     // Retrieve the integrated solution.
+            toxhat(solution, fp, nx, rusr);        // Convert the solution back to normalized space.
+            myfnn(nx, xp, fnn);                    // Evaluate the neural network at xp.
+            for (int k = 0; k < nx; k++)
             {
-                fp[ii] = fp[ii] - xp[ii] - fnn[ii];
-            }
-
-            tnow = 0.0;
-            fromxhat(xm, ptcl, nx, rusr);
-            T[0] = ptcl[0];
-            for (int ii = 1; ii < nx; ii++)
-            {
-                Y[ii - 1] = ptcl[ii];
-            }
-            gas->setState_TPY(T[0], p, Y);
-            integrator->initialize(tnow, odes);
-            integrator->integrate(dt);
-            solution = integrator->solution();
-            toxhat(solution, fm, nx, rusr);
-            myfnn(nx, xm, fnn);
-            for (int ii = 0; ii < nx; ii++)
-            {
-                fm[ii] = fm[ii] - xm[ii] - fnn[ii];
+                // Adjust the function value by subtracting the original xp and NN output.
+                fp[k] = fp[k] - xp[k] - fnn[k];
             }
 
-            // calculate the gradient of fnn subtracting the gradient of the function using central difference.
-            for (int jj = 0; jj < nx; jj++)
+            // ------------------ Evaluate f at xm (x - dx) ------------------
+            tnow = 0.0;                          // Reset time for new evaluation.
+            fromxhat(xm, ptcl, nx, rusr);         // Convert xm to physical space.
+            T[0] = ptcl[0];                      // Extract temperature.
+            for (int k = 1; k < nx; k++)          // Extract species data.
             {
-                g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
+                Y[k - 1] = ptcl[k];
+            }
+            gas->setState_TPY(T[0], p, Y);        // Update the gas state.
+            integrator->initialize(tnow, odes);    // Reinitialize the integrator.
+            integrator->integrate(dt);             // Integrate forward by dt.
+            solution = integrator->solution();     // Retrieve the solution.
+            toxhat(solution, fm, nx, rusr);        // Convert solution back to normalized space.
+            myfnn(nx, xm, fnn);                    // Evaluate the neural network at xm.
+            for (int k = 0; k < nx; k++)
+            {
+                // Adjust function value for xm.
+                fm[k] = fm[k] - xm[k] - fnn[k];
+            }
+
+            // ------------------ Compute the Central Difference ------------------
+            // For each output component, approximate the derivative as:
+            // (f evaluated at (x+dx) - f evaluated at (x-dx)) divided by (2 * dx)
+            for (int j = 0; j < nx; j++)
+            {
+                // Store the derivative in the Jacobian at the (j, i) position.
+                g[j + i * nx] = (fp[j] - fm[j]) / (2 * dx);
             }
         }
     }
     // JACOBIAN ENDS HERE
+
+    /*
+    In summary, for every x point we perturb the input positively and negatively to create neighboring 
+    grid points, recalculate f at these points, and then use the first order central difference 
+    ( (fp - fm)/(2 * dx) ) to approximate the derivative. This process is repeated for each element of 
+    x, constructing the full Jacobian.
+
+    |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+    */
+
 }
 
 void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[])
