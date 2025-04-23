@@ -379,7 +379,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     /*
     |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    
+
     JACOBIAN STARTS HERE
     If the Jacobian is needed (flag need[1] is set), compute it using central finite differences.
     */
@@ -393,7 +393,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
         // Loop over each component of x to compute partial derivatives.
         for (int i = 0; i < nx; i++)
-        {
+        {z
             // Copy the original x into the temporary arrays.
             for (int j = 0; j < nx; j++)
             {
