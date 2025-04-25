@@ -3,6 +3,7 @@ TASK: Instead of central difference, use xm and xp use cantera's jacobian method
 2/ Figure out how to implement back propagation.
 3/ fix cantera conda env
 4/ maybe do cantera + intel conda env
+5/ finish transferring fnn to codejenn
 
 REFERENCES:
 1/ https://cantera.org/stable/reference/

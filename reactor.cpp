@@ -263,6 +263,7 @@ double fAct(double x)
     return x * tanh(log(1.0 + exp(x)));
 }
 
+// Nueral network function
 void myfnn(int &nx, double x[], double fnn[])
 {
 
@@ -282,31 +283,40 @@ void myfnn(int &nx, double x[], double fnn[])
         x1[ii] = x[ii]; // initialize the input
     }
 
+    // go through each layer of nodes
     for (int ll = 0; ll < nLayers; ll++)
     {
 
+        // go through each node
         for (int kk = 0; kk < n2[ll]; kk++)
         {
             x2[kk] = 0.0;
+
+            // matrix multiplication with weights 
             for (int jj = 0; jj < n1[ll]; jj++)
             {
                 // x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
                 x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
             }
+
+            // add bias
             x2[kk] += b[ib[ll] + kk];
 
+            // at end of each layer, apply activation function
             if (ll < nLayers - 1)
             {
                 x2[kk] = fAct(x2[kk]);
             }
         }
 
+        // transfer outputs to inputs for next layer
         for (int kk = 0; kk < n2[ll]; kk++)
         {
             x1[kk] = x2[kk];
         }
     }
 
+    // stores finished output in fnn
     for (int kk = 0; kk < nx; kk++)
     {
         fnn[kk] = x2[kk];
@@ -385,13 +395,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     */
     if (need[1] == 1)
     {
-        // Allocate arrays to store perturbed inputs and corresponding function evaluations.
+
         double xp[nx];  // x perturbed in the positive direction (x + dx)
         double xm[nx];  // x perturbed in the negative direction (x - dx)
         double fp[nf];  // Function f evaluated at xp
         double fm[nf];  // Function f evaluated at xm
 
-        // Loop over each component of x to compute partial derivatives.
+        // Loop over each component of x array
         for (int i = 0; i < nx; i++)
         {z
             // Copy the original x into the temporary arrays.
