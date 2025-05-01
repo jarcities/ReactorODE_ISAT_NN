@@ -1,5 +1,6 @@
 *.o 
 *.mod 
 main.exe 
+main
 *.log 
 *.op
