@@ -8,4 +8,5 @@ TASK: Instead of central difference, use cantera's jacobian method. Then calcula
 REFERENCES:
 1/ https://cantera.org/stable/reference/
 2/ https://cantera.org/3.1/develop/reactor-integration.html
-3/ https://sundials.readthedocs.io/en/latest/cvodes/Introduction_link.html 
+3/ https://sundials.readthedocs.io/en/latest/cvodes/Usage/FSA.html#user-supplied-routines-for-forward-sensitivity-analysis
+4/ https://sundials.readthedocs.io/en/latest/cvodes/Mathematics_link.html#forward-sensitivity-analysis
