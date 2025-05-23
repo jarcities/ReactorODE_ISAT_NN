@@ -4,3 +4,5 @@ main.exe
 main
 *.log 
 *.op
+.DS_Store
+
