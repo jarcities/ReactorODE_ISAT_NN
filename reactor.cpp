@@ -358,21 +358,24 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     gas->setState_TPY(T[0], p, Y);
 
-    /* --------------------- CREATE ODE RHS EVALUATOR --------------------- */
+    //RHS evaluator starts here
     ReactorODEs odes = ReactorODEs(sol);
 
     double tnow = 0.0;
 
     // double dt = 1e-4;
 
-    shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies
+    // shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies
+    shared_ptr<Integrator> integrator(newIntegrator("CVODES")); //forJay
 
-    /*
-    Here we are using the cantera function "integrator" which requires a object constructor as well as a function to evaluate the ODEs called "eval". Other functions used are "getState" and "neq", which are not necessarily required but are used to provide additional information to the integrator.
-    */
+    //canteras class to integrate user ode
     integrator->initialize(tnow, odes);
 
     integrator->setTolerances(aTol, rTol);
+
+    int nsens = nx;  //forJay
+    integrator->sensInit(nsens, CV_STAGGERED);  //forJay
+    integrator->setSensitivityTolerances(aTol, rTol); //forJay
 
     integrator->integrate(dt);
 
@@ -387,95 +390,87 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         f[ii] = f[ii] - x[ii] - fnn[ii];
     }
 
-    /*
-    |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    JACOBIAN STARTS HERE
-    If the Jacobian is needed (flag need[1] is set), compute it using central finite differences.
-    */
-    if (need[1] == 1)
-    {
-
-        double xp[nx];  // x perturbed in the positive direction (x + dx)
-        double xm[nx];  // x perturbed in the negative direction (x - dx)
-        double fp[nf];  // Function f evaluated at xp
-        double fm[nf];  // Function f evaluated at xm
-
-        // Loop over each component of x array
-        for (int i = 0; i < nx; i++)
-        {z
-            // Copy the original x into the temporary arrays.
-            for (int j = 0; j < nx; j++)
-            {
-                xp[j] = x[j];
-                xm[j] = x[j];
-            }
-
-            // Apply perturbation: add dx to xp and subtract dx from xm at the i-th element.
-            xp[i] += dx;
-            xm[i] -= dx;
-
-            // ------------------ Evaluate f at xp (x + dx) ------------------
-            tnow = 0.0;                          // Reset integration time.
-            fromxhat(xp, ptcl, nx, rusr);         // Convert xp from normalized to physical space.
-            T[0] = ptcl[0];                      // Extract temperature from ptcl.
-            for (int k = 1; k < nx; k++)          // Extract species values (skipping temperature).
-            {
-                Y[k - 1] = ptcl[k];
-            }
-            gas->setState_TPY(T[0], p, Y);        // Update the gas state.
-            integrator->initialize(tnow, odes);    // (Re)initialize the integrator.
-            integrator->integrate(dt);             // Integrate the ODEs forward by dt.
-            solution = integrator->solution();     // Retrieve the integrated solution.
-            toxhat(solution, fp, nx, rusr);        // Convert the solution back to normalized space.
-            myfnn(nx, xp, fnn);                    // Evaluate the neural network at xp.
-            for (int k = 0; k < nx; k++)
-            {
-                // Adjust the function value by subtracting the original xp and NN output.
-                fp[k] = fp[k] - xp[k] - fnn[k];
-            }
-
-            // ------------------ Evaluate f at xm (x - dx) ------------------
-            tnow = 0.0;                          // Reset time for new evaluation.
-            fromxhat(xm, ptcl, nx, rusr);         // Convert xm to physical space.
-            T[0] = ptcl[0];                      // Extract temperature.
-            for (int k = 1; k < nx; k++)          // Extract species data.
-            {
-                Y[k - 1] = ptcl[k];
-            }
-            gas->setState_TPY(T[0], p, Y);        // Update the gas state.
-            integrator->initialize(tnow, odes);    // Reinitialize the integrator.
-            integrator->integrate(dt);             // Integrate forward by dt.
-            solution = integrator->solution();     // Retrieve the solution.
-            toxhat(solution, fm, nx, rusr);        // Convert solution back to normalized space.
-            myfnn(nx, xm, fnn);                    // Evaluate the neural network at xm.
-            for (int k = 0; k < nx; k++)
-            {
-                // Adjust function value for xm.
-                fm[k] = fm[k] - xm[k] - fnn[k];
-            }
-
-            // ------------------ Compute the Central Difference ------------------
-            // For each output component, approximate the derivative as:
-            // (f evaluated at (x+dx) - f evaluated at (x-dx)) divided by (2 * dx)
-            for (int j = 0; j < nx; j++)
-            {
-                // Store the derivative in the Jacobian at the (j, i) position.
-                g[j + i * nx] = (fp[j] - fm[j]) / (2 * dx);
+    //.......................................................................................................
+    //JACOBIAN STARTS HERE
+    if (need[1] == 1) {
+        for (int i = 0; i < nx; ++i) {
+            for (int j = 0; j < nx; ++j) {
+                g[i + j * nx] = integrator->sensitivity(i, j);
             }
         }
     }
-    // JACOBIAN ENDS HERE
+    // if (need[1] == 1) //1 denotes jacobian is needed
+    // {
 
-    /*
-    In summary, for every x point we perturb the input positively and negatively to create neighboring 
-    grid points, recalculate f at these points, and then use the first order central difference 
-    ( (fp - fm)/(2 * dx) ) to approximate the derivative. This process is repeated for each element of 
-    x, constructing the full Jacobian.
+    //     double xp[nx];  //x perturbed in the positive direction (x + dx)
+    //     double xm[nx];  //x perturbed in the negative direction (x - dx)
+    //     double fp[nf];  //function f evaluated at xp
+    //     double fm[nf];  //function f evaluated at xm
 
-    |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-    */
+    //     //loop over x array
+    //     for (int i = 0; i < nx; i++)
+    //     {z
+    //         //temporary variables
+    //         for (int j = 0; j < nx; j++)
+    //         {
+    //             xp[j] = x[j];
+    //             xm[j] = x[j];
+    //         }
 
+    //         //apply perturbations +- dx
+    //         xp[i] += dx;
+    //         xm[i] -= dx;
+
+    //         ////----Evaluate f at xp (x + dx)----////
+    //         tnow = 0.0; //reset integration time.
+    //         fromxhat(xp, ptcl, nx, rusr); //normalize
+    //         T[0] = ptcl[0];                  
+            
+    //         //get state
+    //         for (int k = 1; k < nx; k++)        
+    //         {
+    //             Y[k - 1] = ptcl[k];
+    //         }
+    //         gas->setState_TPY(T[0], p, Y);        //update gas state
+    //         integrator->initialize(tnow, odes);    //intialize integrator
+    //         integrator->integrate(dt);             //integrate
+    //         solution = integrator->solution();     //get solution
+    //         toxhat(solution, fp, nx, rusr);        //un-normalize
+    //         myfnn(nx, xp, fnn);                    //call NN
+    //         for (int k = 0; k < nx; k++)
+    //         {
+    //             //subtract error
+    //             fp[k] = fp[k] - xp[k] - fnn[k];
+    //         }
+
+    //         ////----Evaluate f at xm (x - dx)----////
+    //         tnow = 0.0;                          
+    //         fromxhat(xm, ptcl, nx, rusr);        
+    //         T[0] = ptcl[0];                      
+    //         for (int k = 1; k < nx; k++)         
+    //         {
+    //             Y[k - 1] = ptcl[k];
+    //         }
+    //         gas->setState_TPY(T[0], p, Y);       
+    //         integrator->initialize(tnow, odes);  
+    //         integrator->integrate(dt);           
+    //         solution = integrator->solution();   
+    //         toxhat(solution, fm, nx, rusr);      
+    //         myfnn(nx, xm, fnn);                  
+    //         for (int k = 0; k < nx; k++)
+    //         {
+    //             fm[k] = fm[k] - xm[k] - fnn[k];
+    //         }
+
+    //         ////----central difference----////
+    //         for (int j = 0; j < nx; j++)
+    //         {
+    //             g[j + i * nx] = (fp[j] - fm[j]) / (2 * dx);
+    //         }
+    //     }
+    // }
+    //JACOBIAN ENDS HERE
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 }
 
 void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[])
