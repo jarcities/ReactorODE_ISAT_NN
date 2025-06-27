@@ -262,13 +262,12 @@ module extFGH
           ptcls(1:nx, i2) = x2    ! Write back the updated state for particle i2.
        end do
        !-------------------------------
-    end do ! End of main time-stepping loop.
+    end do 
     !-----------------------------------------------------------------------
  
-    ! Get the CPU time at the end of the simulation.
+    !get cpu time
     call cpu_time(finish)
  
-    ! A final call to myfgh (perhaps for diagnostics or final evaluation).
     call myfgh( need, nx, x, nf, nh, iusr, rusr, f, g, h )
  
     !-------------------------------
