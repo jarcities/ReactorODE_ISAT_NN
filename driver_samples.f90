@@ -272,18 +272,18 @@ module extFGH
     call myfgh( need, nx, x, nf, nh, iusr, rusr, f, g, h )
  
     !-------------------------------
-    ! Performance testing: repeated ISAT evaluations.
-    do ii = 1, 100
-       call cpu_time(start)  ! Record start time.
-       call isatab( idd, 0, nx, x, nf, nh, nh, myfgh, iusr, rusr, info, rinfo, f, g, h, stats)
-          ! Evaluate ISAT for the state x.
-       call cpu_time(finish) ! Record finish time.
-       print '("Time = ",e10.3," seconds.")', finish - start
-          ! Print the elapsed time for the ISAT call.
-       print *, f(1) * rusr(7+1)
-          ! Print a scaled version of the first component of the residual f.
-       print *, ii       ! Print the current iteration number.
-    end do
+    ! ! Performance testing: repeated ISAT evaluations.
+    ! do ii = 1, 100
+    !    call cpu_time(start)  ! Record start time.
+    !    call isatab( idd, 0, nx, x, nf, nh, nh, myfgh, iusr, rusr, info, rinfo, f, g, h, stats)
+    !       ! Evaluate ISAT for the state x.
+    !    call cpu_time(finish) ! Record finish time.
+    !    print '("Time = ",e10.3," seconds.")', finish - start
+    !       ! Print the elapsed time for the ISAT call.
+    !    print *, f(1) * rusr(7+1)
+    !       ! Print a scaled version of the first component of the residual f.
+    !    print *, ii       ! Print the current iteration number.
+    ! end do
     !-------------------------------
  
  end program main
