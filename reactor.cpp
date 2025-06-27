@@ -373,7 +373,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     integrator->setTolerances(aTol, rTol);
 
-    int nsens = x; //CVODES
+    int nsens = nx; //CVODES
     integrator->sensInit(nsens, CV_STAGGERED); //CVODES
     integrator->setSensitivityTolerances(aTol, rTol); //CVODES
 
@@ -398,7 +398,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         {
             for (int j = 0; j < nx; ++j) 
             {
-                g[i + j * nx] = integrator->sensitivity(i, j);
+                // g[i + j * nx] = integrator->sensitivity(i, j);
+                g[j + i*nx] = integrator->sensitivity(j, i);
             }
         }
     }
