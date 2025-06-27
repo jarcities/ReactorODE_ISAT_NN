@@ -402,76 +402,76 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //         }
     //     }
     // }
-    // if (need[1] == 1) //CVODE
-    // {
+    if (need[1] == 1) //CVODE
+    {
 
-    //     double xp[nx];  //x perturbed in the positive direction (x + dx)
-    //     double xm[nx];  //x perturbed in the negative direction (x - dx)
-    //     double fp[nf];  //function f evaluated at xp
-    //     double fm[nf];  //function f evaluated at xm
+        double xp[nx];  //x perturbed in the positive direction (x + dx)
+        double xm[nx];  //x perturbed in the negative direction (x - dx)
+        double fp[nf];  //function f evaluated at xp
+        double fm[nf];  //function f evaluated at xm
 
-    //     //loop over x array
-    //     for (int i = 0; i < nx; i++)
-    //     {z
-    //         //temporary variables
-    //         for (int j = 0; j < nx; j++)
-    //         {
-    //             xp[j] = x[j];
-    //             xm[j] = x[j];
-    //         }
+        //loop over x array
+        for (int i = 0; i < nx; i++)
+        {z
+            //temporary variables
+            for (int j = 0; j < nx; j++)
+            {
+                xp[j] = x[j];
+                xm[j] = x[j];
+            }
 
-    //         //apply perturbations +- dx
-    //         xp[i] += dx;
-    //         xm[i] -= dx;
+            //apply perturbations +- dx
+            xp[i] += dx;
+            xm[i] -= dx;
 
-    //         ////----Evaluate f at xp (x + dx)----////
-    //         tnow = 0.0; //reset integration time.
-    //         fromxhat(xp, ptcl, nx, rusr); //normalize
-    //         T[0] = ptcl[0];                  
+            ////----Evaluate f at xp (x + dx)----////
+            tnow = 0.0; //reset integration time.
+            fromxhat(xp, ptcl, nx, rusr); //normalize
+            T[0] = ptcl[0];                  
             
-    //         //get state
-    //         for (int k = 1; k < nx; k++)        
-    //         {
-    //             Y[k - 1] = ptcl[k];
-    //         }
-    //         gas->setState_TPY(T[0], p, Y);        //update gas state
-    //         integrator->initialize(tnow, odes);    //intialize integrator
-    //         integrator->integrate(dt);             //integrate
-    //         solution = integrator->solution();     //get solution
-    //         toxhat(solution, fp, nx, rusr);        //un-normalize
-    //         myfnn(nx, xp, fnn);                    //call NN
-    //         for (int k = 0; k < nx; k++)
-    //         {
-    //             //subtract error
-    //             fp[k] = fp[k] - xp[k] - fnn[k];
-    //         }
+            //get state
+            for (int k = 1; k < nx; k++)        
+            {
+                Y[k - 1] = ptcl[k];
+            }
+            gas->setState_TPY(T[0], p, Y);        //update gas state
+            integrator->initialize(tnow, odes);    //intialize integrator
+            integrator->integrate(dt);             //integrate
+            solution = integrator->solution();     //get solution
+            toxhat(solution, fp, nx, rusr);        //un-normalize
+            myfnn(nx, xp, fnn);                    //call NN
+            for (int k = 0; k < nx; k++)
+            {
+                //subtract error
+                fp[k] = fp[k] - xp[k] - fnn[k];
+            }
 
-    //         ////----Evaluate f at xm (x - dx)----////
-    //         tnow = 0.0;                          
-    //         fromxhat(xm, ptcl, nx, rusr);        
-    //         T[0] = ptcl[0];                      
-    //         for (int k = 1; k < nx; k++)         
-    //         {
-    //             Y[k - 1] = ptcl[k];
-    //         }
-    //         gas->setState_TPY(T[0], p, Y);       
-    //         integrator->initialize(tnow, odes);  
-    //         integrator->integrate(dt);           
-    //         solution = integrator->solution();   
-    //         toxhat(solution, fm, nx, rusr);      
-    //         myfnn(nx, xm, fnn);                  
-    //         for (int k = 0; k < nx; k++)
-    //         {
-    //             fm[k] = fm[k] - xm[k] - fnn[k];
-    //         }
+            ////----Evaluate f at xm (x - dx)----////
+            tnow = 0.0;                          
+            fromxhat(xm, ptcl, nx, rusr);        
+            T[0] = ptcl[0];                      
+            for (int k = 1; k < nx; k++)         
+            {
+                Y[k - 1] = ptcl[k];
+            }
+            gas->setState_TPY(T[0], p, Y);       
+            integrator->initialize(tnow, odes);  
+            integrator->integrate(dt);           
+            solution = integrator->solution();   
+            toxhat(solution, fm, nx, rusr);      
+            myfnn(nx, xm, fnn);                  
+            for (int k = 0; k < nx; k++)
+            {
+                fm[k] = fm[k] - xm[k] - fnn[k];
+            }
 
-    //         ////----central difference----////
-    //         for (int j = 0; j < nx; j++)
-    //         {
-    //             g[j + i * nx] = (fp[j] - fm[j]) / (2 * dx);
-    //         }
-    //     }
-    // }
+            ////----central difference----////
+            for (int j = 0; j < nx; j++)
+            {
+                g[j + i * nx] = (fp[j] - fm[j]) / (2 * dx);
+            }
+        }
+    }
     //JACOBIAN ENDS HERE
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 }
