@@ -412,7 +412,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
         //loop over x array
         for (int i = 0; i < nx; i++)
-        {z
+        {
             //temporary variables
             for (int j = 0; j < nx; j++)
             {
