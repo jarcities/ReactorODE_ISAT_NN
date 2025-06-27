@@ -1,7 +1,7 @@
 ﻿#!/bin/bash
 
 # COMMENT OUT IF NECESSARY
-ml unload shared DefaultModules gcc/13.1.0 slurm/slurm/23.02.8 # FOR SDSU FERMI ONLY
+# ml unload shared DefaultModules gcc/13.1.0 slurm/slurm/23.02.8 # FOR SDSU FERMI ONLY
 
 # SOURCE VARIABLES FROM INTEL ONEAPI
 # source ../../intel/oneapi/setvars.sh # FOR SDSU FERMI ONLY
