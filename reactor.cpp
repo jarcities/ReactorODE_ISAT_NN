@@ -333,8 +333,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];
     double ptcl[nx];
     double *solution;
-    double aTol = 1e-8; // rusr[2*nx];
-    double rTol = 1e-8; // rusr[2*nx+1];
+    double aTol = 1e-8; //rusr[2*nx];
+    double rTol = 1e-8; //rusr[2*nx+1];
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4];
@@ -365,17 +365,17 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     // double dt = 1e-4;
 
-    // shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies
-    shared_ptr<Integrator> integrator(newIntegrator("CVODES")); //forJay
+    shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies
+    // shared_ptr<Integrator> integrator(newIntegrator("CVODES")); //CVODES
 
     //canteras class to integrate user ode
     integrator->initialize(tnow, odes);
 
     integrator->setTolerances(aTol, rTol);
 
-    int nsens = nx;  //forJay
-    integrator->sensInit(nsens, CV_STAGGERED);  //forJay
-    integrator->setSensitivityTolerances(aTol, rTol); //forJay
+    // int nsens = x; //CVODES
+    // integrator->sensInit(nsens, CV_STAGGERED); //CVODES
+    // integrator->setSensitivityTolerances(aTol, rTol); //CVODES
 
     integrator->integrate(dt);
 
@@ -391,15 +391,18 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     //.......................................................................................................
-    //JACOBIAN STARTS HERE
-    if (need[1] == 1) {
-        for (int i = 0; i < nx; ++i) {
-            for (int j = 0; j < nx; ++j) {
-                g[i + j * nx] = integrator->sensitivity(i, j);
-            }
-        }
-    }
-    // if (need[1] == 1) //1 denotes jacobian is needed
+    //JACOBIAN STARTS HERE (1 denotes jacobian is needed)
+    // if (need[1] == 1) //CVODES
+    // { 
+    //     for (int i = 0; i < nx; ++i) 
+    //     {
+    //         for (int j = 0; j < nx; ++j) 
+    //         {
+    //             g[i + j * nx] = integrator->sensitivity(i, j);
+    //         }
+    //     }
+    // }
+    // if (need[1] == 1) //CVODE
     // {
 
     //     double xp[nx];  //x perturbed in the positive direction (x + dx)
