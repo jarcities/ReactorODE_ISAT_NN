@@ -2,20 +2,16 @@
 ./build.sh: line 1: ﻿#!/bin/bash: No such file or directory
 icpx: warning: -lcantera: 'linker' input unused [-Wunused-command-line-argument]
 icpx: warning: argument unused during compilation: '-L/home/jsampayan4914/miniconda3/envs/intel_cantera/lib' [-Wunused-command-line-argument]
-(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./main.exe 
-error before set sens tolerances
-error after set sens tolerances
-forrtl: severe (174): SIGSEGV, segmentation fault occurred
-Image              PC                Routine            Line        Source             
-libc.so.6          000015554CE3E6F0  Unknown               Unknown  Unknown
-libcantera.so.3.1  0000155555074060  _ZN7Cantera16CVod     Unknown  Unknown
-libcantera.so.3.1  0000155555074B66  _ZN7Cantera16CVod     Unknown  Unknown
-main.exe           0000000000412DBC  Unknown               Unknown  Unknown
-main.exe           0000000000416E18  Unknown               Unknown  Unknown
-main.exe           000000000040A9E0  Unknown               Unknown  Unknown
-main.exe           00000000004076ED  Unknown               Unknown  Unknown
-libc.so.6          000015554CE29590  Unknown               Unknown  Unknown
-libc.so.6          000015554CE29640  __libc_start_main     Unknown  Unknown
-main.exe           0000000000407605  Unknown               Unknown  Unknown
+lreactor.cpp:396:17: error: no member named 'setSensitivityMethod' in 'Cantera::Integrator'
+  396 |     integrator->setSensitivityMethod(CVODES_STAGGERED); //CVODES
+      |     ~~~~~~~~~~~~^
+reactor.cpp:396:38: error: use of undeclared identifier 'CVODES_STAGGERED'
+  396 |     integrator->setSensitivityMethod(CVODES_STAGGERED); //CVODES
+      |                                      ^
+reactor.cpp:400:17: error: no member named 'setSensitivityParameters' in 'Cantera::Integrator'
+  400 |     integrator->setSensitivityParameters(plist, pbar); //CVODES
+      |     ~~~~~~~~~~~~^
+3 errors generated.
+ifx: error #10236: File not found: 'reactor.o'
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ 
 
