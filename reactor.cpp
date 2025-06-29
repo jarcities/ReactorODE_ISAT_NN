@@ -151,7 +151,7 @@ public:
     //CVODES
 
     //CVODES
-    void sensParams(double* p, double* pbar) const override {
+    void sensParams(double* p, double* pbar) const {
         for (size_t i = 0; i < m_nEqs; i++) {
             p[i]    = m_sens_params[i];
             pbar[i] = m_paramScales[i];
@@ -391,15 +391,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies
     shared_ptr<Integrator> integrator(newIntegrator("CVODES")); //CVODES
 
-    //canteras class to integrate user ode
-    integrator->initialize(tnow, odes);
-
-    integrator->sensInit(nsens, CV_STAGGERED); //CVODES
-
     integrator->setTolerances(aTol, rTol);
 
-    int nsens = nx; //CVODES
     integrator->setSensitivityTolerances(aTol, rTol); //CVODES
+
+    //canteras class to integrate user ode
+    integrator->initialize(tnow, odes);
 
     integrator->integrate(dt);
 
@@ -429,6 +426,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         // }
 
         //calculate fnn gradient
+        std::vector<double> Jnn(nx*nx);
         double eps = 1e-6;
         vector<double> fnn_p(nx), fnn_m(nx), xp(x,x+nx), xm(x,x+nx);
         for(int j=0 ; j < nx ; ++j)
@@ -455,7 +453,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         }
     }
     //CVODES
-    
+
     // if (need[1] == 1) //CVODE
     // {
 
