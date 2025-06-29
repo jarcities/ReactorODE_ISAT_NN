@@ -395,6 +395,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     std::cout << "error before set sens tolerances" << std::endl;
     integrator->setSensitivityTolerances(aTol, rTol); //CVODES
+    std::cout << "error after set sens tolerances" << std::endl;
 
     //canteras class to integrate user ode
     integrator->initialize(tnow, odes);
@@ -402,6 +403,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     integrator->integrate(dt);
 
     solution = integrator->solution();
+    std::cout << "error after integration" << std::endl;
 
     toxhat(solution, f, nx, rusr);
 
