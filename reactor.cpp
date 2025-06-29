@@ -384,9 +384,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //CVDOES 
     shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
     integrator->setTolerances(aTol, rTol);
+    std::cout << "after setting tolerances" << std::endl;
     integrator->setSensitivityTolerances(aTol, rTol);
+    std::cout << "after setting sens. tolerances" << std::endl;
     integrator->initialize(tnow, odes);
+    std::cout << "after initalizing" << std::endl;
     integrator->integrate(dt);
+    std::cout << "after integrating" << std::endl;
  
     solution = integrator->solution(); 
  
