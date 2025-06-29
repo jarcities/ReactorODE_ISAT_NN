@@ -399,11 +399,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //canteras class to integrate user ode
     integrator->initialize(tnow, odes);
+    std::cout << "error after intializing" << std::endl;
 
     integrator->integrate(dt);
+    std::cout << "error after integration" << std::endl;
 
     solution = integrator->solution();
-    std::cout << "error after integration" << std::endl;
+    std::cout << "error after grabbing solution" << std::endl;
 
     toxhat(solution, f, nx, rusr);
 
