@@ -135,7 +135,29 @@ public:
         // number of equations in the ODE system. a conservation equation for each
         // species, plus a single energy conservation equation for the system.
         m_nEqs = m_nSpecies + 1;
+
+        //CVODES
+        vector<double> y0(m_nEqs);
+        getState(y0.data());
+        m_sens_params = y0;
+        m_paramScales.assign(m_nEqs, 1.0);
+        //CVODES
     }
+
+    //CVODES
+    size_t nparams() const override { 
+        return m_nEqs;
+    }
+    //CVODES
+
+    //CVODES
+    void sensParams(double* p, double* pbar) const override {
+        for (size_t i = 0; i < m_nEqs; i++) {
+            p[i]    = m_sens_params[i];
+            pbar[i] = m_paramScales[i];
+        }
+    }
+    //CVODES
 
     /**
      * Evaluate the ODE right-hand-side function, ydot = f(t,y).
@@ -227,6 +249,7 @@ private:
     double m_pressure;
     size_t m_nSpecies;
     size_t m_nEqs;
+    vector<double> m_sens_params, m_paramScales; //CVODES
 };
 
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
@@ -371,10 +394,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //canteras class to integrate user ode
     integrator->initialize(tnow, odes);
 
+    integrator->sensInit(nsens, CV_STAGGERED); //CVODES
+
     integrator->setTolerances(aTol, rTol);
 
     int nsens = nx; //CVODES
-    integrator->sensInit(nsens, CV_STAGGERED); //CVODES
     integrator->setSensitivityTolerances(aTol, rTol); //CVODES
 
     integrator->integrate(dt);
@@ -392,17 +416,46 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //.......................................................................................................
     //JACOBIAN STARTS HERE (1 denotes jacobian is needed)
-    if (need[1] == 1) //CVODES
+    //CVODES
+    if (need[1] == 1) 
     { 
-        for (int i = 0; i < nx; ++i) 
+        // for (int i = 0; i < nx; ++i) 
+        // {
+        //     for (int j = 0; j < nx; ++j) 
+        //     {
+        //         // g[i + j * nx] = integrator->sensitivity(i, j);
+        //         g[j + i*nx] = integrator->sensitivity(j, i);
+        //     }
+        // }
+
+        //calculate fnn gradient
+        double eps = 1e-6;
+        vector<double> fnn_p(nx), fnn_m(nx), xp(x,x+nx), xm(x,x+nx);
+        for(int j=0 ; j < nx ; ++j)
+        {
+            xp[j] += eps;
+            xm[j] -= eps;
+            myfnn(nx, xp.data(), fnn_p.data());
+            myfnn(nx, xm.data(), fnn_m.data());
+            for(int i=0;i<nx;++i){
+                Jnn[i + j*nx] = (fnn_p[i] - fnn_m[i])/(2*eps);
+            }
+            xp[j] = x[j];
+            xm[j] = x[j];
+        }
+        for (int i = 0; i < nx; ++i)
         {
             for (int j = 0; j < nx; ++j) 
             {
-                // g[i + j * nx] = integrator->sensitivity(i, j);
-                g[j + i*nx] = integrator->sensitivity(j, i);
+                double dy_dx = integrator->sensitivity(i, j);
+                double dnn_dx = Jnn[i + j*nx];
+                double val = dy_dx - (i==j ? 1.0 : 0.0) - dnn_dx;
+                g[i + j*nx] = val;
             }
         }
     }
+    //CVODES
+    
     // if (need[1] == 1) //CVODE
     // {
 
