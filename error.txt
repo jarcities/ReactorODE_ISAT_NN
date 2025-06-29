@@ -1,0 +1,36 @@
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ls
+A1.csv  A3.csv  A5.csv  B2.csv  B4.csv  bin       clean.sh            extfgh.mod  reactor.cpp  README.txt
+A2.csv  A4.csv  B1.csv  B3.csv  B5.csv  build.sh  driver_samples.f90  literature  reactor.hpp  TODO.txt
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./build.sh 
+./build.sh: line 1: ﻿#!/bin/bash: No such file or directory
+icpx: warning: -lcantera: 'linker' input unused [-Wunused-command-line-argument]
+icpx: warning: argument unused during compilation: '-L/home/jsampayan4914/miniconda3/envs/intel_cantera/lib' [-Wunused-command-line-argument]
+reactor.cpp:154:52: error: only virtual member functions can be marked 'override'
+  154 |     void sensParams(double* p, double* pbar) const override {
+      |                                                    ^~~~~~~~
+reactor.cpp:397:17: error: no member named 'sensInit' in 'Cantera::Integrator'
+  397 |     integrator->sensInit(nsens, CV_STAGGERED); //CVODES
+      |     ~~~~~~~~~~~~^
+reactor.cpp:397:26: error: use of undeclared identifier 'nsens'
+  397 |     integrator->sensInit(nsens, CV_STAGGERED); //CVODES
+      |                          ^
+reactor.cpp:397:33: error: use of undeclared identifier 'CV_STAGGERED'
+  397 |     integrator->sensInit(nsens, CV_STAGGERED); //CVODES
+      |                                 ^
+reactor.cpp:441:17: error: use of undeclared identifier 'Jnn'; did you mean 'fnn'?
+  441 |                 Jnn[i + j*nx] = (fnn_p[i] - fnn_m[i])/(2*eps);
+      |                 ^~~
+      |                 fnn
+reactor.cpp:364:12: note: 'fnn' declared here
+  364 |     double fnn[nx];
+      |            ^
+reactor.cpp:451:33: error: use of undeclared identifier 'Jnn'; did you mean 'fnn'?
+  451 |                 double dnn_dx = Jnn[i + j*nx];
+      |                                 ^~~
+      |                                 fnn
+reactor.cpp:364:12: note: 'fnn' declared here
+  364 |     double fnn[nx];
+      |            ^
+6 errors generated.
+ifx: error #10236: File not found: 'reactor.o'
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ 
