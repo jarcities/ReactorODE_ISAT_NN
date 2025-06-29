@@ -7,9 +7,9 @@
  
 #compile cpp with linking cantera
 # icpx -O3 -L../cantera/build/lib -I../cantera/include -c reactor.cpp -lcantera
-# icpx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
+icpx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
 #debugging
-icpx -g -fsanitize=address -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
+# icpx -g -fsanitize=address -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
 
 
 #compile f90 linking cantera and cpp 
