@@ -393,6 +393,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     integrator->setTolerances(aTol, rTol);
 
+    integrator->setSensitivityMethod(CVODES_STAGGERED); //CVODES
+    std::vector<int> plist(nx); //CVODES
+    std::iota(plist.begin(), plist.end(), 0); //CVODES
+    std::vector<double> pbar(nx, 1.0); //CVODES
+    integrator->setSensitivityParameters(plist, pbar); //CVODES
+
     std::cout << "error before set sens tolerances" << std::endl;
     integrator->setSensitivityTolerances(aTol, rTol); //CVODES
     std::cout << "error after set sens tolerances" << std::endl;
