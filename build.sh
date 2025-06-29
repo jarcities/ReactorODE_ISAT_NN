@@ -7,7 +7,14 @@
  
 #compile cpp with linking cantera
 # icpx -O3 -L../cantera/build/lib -I../cantera/include -c reactor.cpp -lcantera
-icpx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
+# icpx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
+#debugging
+icpx -std=c++17 -g -fsanitize=address reactor.cpp \
+     -I"$CONDA_PREFIX/include" \
+     -L"$CONDA_PREFIX/lib" \
+     -lcantera \
+     -o main.exe
+
 
 #compile f90 linking cantera and cpp 
 # ifx -O3 -L../cantera/build/lib -I../cantera/include -o main.exe driver_samples.f90 reactor.o \

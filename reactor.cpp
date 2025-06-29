@@ -393,6 +393,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     integrator->setTolerances(aTol, rTol);
 
+    std::cout << "error before set sens tolerances" << std::endl;
     integrator->setSensitivityTolerances(aTol, rTol); //CVODES
 
     //canteras class to integrate user ode
@@ -426,6 +427,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         // }
 
         //calculate fnn gradient
+        std::cout << "error before fnn gradient" << std::endl;
         std::vector<double> Jnn(nx*nx);
         double eps = 1e-6;
         vector<double> fnn_p(nx), fnn_m(nx), xp(x,x+nx), xm(x,x+nx);
@@ -441,6 +443,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             xp[j] = x[j];
             xm[j] = x[j];
         }
+        std::cout << "error before sensitivity calculations" << std::endl;
         for (int i = 0; i < nx; ++i)
         {
             for (int j = 0; j < nx; ++j) 
