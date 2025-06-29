@@ -1,17 +1,42 @@
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ls
+A1.csv  A3.csv  A5.csv  B2.csv  B4.csv  bin       clean.sh            error.txt   reactor.cpp  README.txt
+A2.csv  A4.csv  B1.csv  B3.csv  B5.csv  build.sh  driver_samples.f90  literature  reactor.hpp  TODO.txt
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./build.sh 
 ./build.sh: line 1: ﻿#!/bin/bash: No such file or directory
 icpx: warning: -lcantera: 'linker' input unused [-Wunused-command-line-argument]
 icpx: warning: argument unused during compilation: '-L/home/jsampayan4914/miniconda3/envs/intel_cantera/lib' [-Wunused-command-line-argument]
-lreactor.cpp:396:17: error: no member named 'setSensitivityMethod' in 'Cantera::Integrator'
-  396 |     integrator->setSensitivityMethod(CVODES_STAGGERED); //CVODES
-      |     ~~~~~~~~~~~~^
-reactor.cpp:396:38: error: use of undeclared identifier 'CVODES_STAGGERED'
-  396 |     integrator->setSensitivityMethod(CVODES_STAGGERED); //CVODES
-      |                                      ^
-reactor.cpp:400:17: error: no member named 'setSensitivityParameters' in 'Cantera::Integrator'
-  400 |     integrator->setSensitivityParameters(plist, pbar); //CVODES
-      |     ~~~~~~~~~~~~^
-3 errors generated.
+reactor.cpp:230:52: error: only virtual member functions can be marked 'override'
+  230 |     void sensParams(double* p, double* pbar) const override {
+      |                                                    ^~~~~~~~
+reactor.cpp:376:10: error: 'm_sens_params' is a private member of 'ReactorODEs'
+  376 |     odes.m_sens_params .resize(nx);
+      |          ^
+reactor.cpp:246:25: note: declared private here
+  246 |     std::vector<double> m_sens_params; //CVODES
+      |                         ^
+reactor.cpp:377:10: error: 'm_paramScales' is a private member of 'ReactorODEs'
+  377 |     odes.m_paramScales.resize(nx);
+      |          ^
+reactor.cpp:247:25: note: declared private here
+  247 |     std::vector<double> m_paramScales; //CVODES
+      |                         ^
+reactor.cpp:380:14: error: 'm_sens_params' is a private member of 'ReactorODEs'
+  380 |         odes.m_sens_params[i] = ptcl[i]
+      |              ^
+reactor.cpp:246:25: note: declared private here
+  246 |     std::vector<double> m_sens_params; //CVODES
+      |                         ^
+reactor.cpp:380:40: error: expected ';' after expression
+  380 |         odes.m_sens_params[i] = ptcl[i]
+      |                                        ^
+      |                                        ;
+reactor.cpp:381:14: error: 'm_paramScales' is a private member of 'ReactorODEs'
+  381 |         odes.m_paramScales[i] = 1.0;   // unit scaling → dY/dx raw
+      |              ^
+reactor.cpp:247:25: note: declared private here
+  247 |     std::vector<double> m_paramScales; //CVODES
+      |                         ^
+6 errors generated.
 ifx: error #10236: File not found: 'reactor.o'
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ 
 
