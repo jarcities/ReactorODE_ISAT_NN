@@ -388,8 +388,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     // double dt = 1e-4;
 
-    // shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies
-    shared_ptr<Integrator> integrator(newIntegrator("CVODES")); //CVODES
+    shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies
+    // shared_ptr<Integrator> integrator(newIntegrator("CVODES")); //CVODES
 
     integrator->setTolerances(aTol, rTol);
 
