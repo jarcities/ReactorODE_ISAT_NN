@@ -15,9 +15,6 @@
  
 #include "reactor.hpp" 
 #include <cmath> 
-#include <vector>
-#include <numeric>
-#include <iostream>
  
 using namespace Cantera; 
  
@@ -220,22 +217,6 @@ public:
         y[0] = m_gas->temperature(); 
         m_gas->getMassFractions(&y[1]); 
     } 
-
-    //CVODES
-    size_t nparams() const override {
-        return m_nEqs;
-    }
-
-    //CVODES
-    void sensParams(double* p, double* pbar) const {
-        for (size_t i = 0; i < m_nEqs; ++i) {
-            p[i]    = m_sens_params[i];
-            pbar[i] = m_paramScales[i];
-        }
-    }
-
-    std::vector<double> m_sens_params; //CVODES
-    std::vector<double> m_paramScales; //CVODES
  
 private: 
     // private member variables, to be used internally. 
@@ -259,7 +240,7 @@ void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
         ptcl[ii] = rusr[ii] * exp(-log(rusr[ii]) * x[ii]) - rusr[ii]; 
     } 
  
-    // for ( int ii = 0; ii < nx; ii++ ){ptcl[ii] = x[ii]*(100000.0*rusr[ii]);} //REMOVE THIS 
+    // for ( int ii = 0; ii < nx; ii++ ){ptcl[ii] = x[ii]*(100000.0*rusr[ii]);} // REMOVE THIS 
 } 
  
 void toxhat(double ptcl[], double x[], int &nx, double rusr[]) 
@@ -373,25 +354,17 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double tnow = 0.0; 
  
     // double dt = 1e-4; 
-
-    odes.m_sens_params .resize(nx);
-    odes.m_paramScales.resize(nx);
-    for (int i = 0; i < nx; ++i) {
-        // odes.m_sens_params[i] = x[i];   
-        odes.m_sens_params[i] = ptcl[i];
-        odes.m_paramScales[i] = 1.0;   // unit scaling → dY/dx raw
-    }
-
-    //CVDOES 
-    shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
-    integrator->setTolerances(aTol, rTol);
-    std::cout << "after setting tolerances" << std::endl;
-    integrator->setSensitivityTolerances(aTol, rTol);
-    std::cout << "after setting sens. tolerances" << std::endl;
-    integrator->initialize(tnow, odes);
-    std::cout << "after initalizing" << std::endl;
-    integrator->integrate(dt);
-    std::cout << "after integrating" << std::endl;
+ 
+    shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // cvode without senesitivies 
+ 
+    /* 
+    Here we are using the cantera function "integrator" which requires a object constructor as well as a function to evaluate the ODEs called "eval". Other functions used are "getState" and "neq", which are not necessarily required but are used to provide additional information to the integrator. 
+    */ 
+    integrator->initialize(tnow, odes); 
+ 
+    integrator->setTolerances(aTol, rTol); 
+ 
+    integrator->integrate(dt); 
  
     solution = integrator->solution(); 
  
@@ -403,98 +376,70 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     { 
         f[ii] = f[ii] - x[ii] - fnn[ii]; 
     } 
-    
-    //START OF JACOBIAN
+ 
     if (need[1] == 1) 
-    { //CVODES
-        std::vector<double> Jnn(nx*nx);
-        double eps = 1e-6;
-        std::vector<double> fnn_p(nx), fnn_m(nx), xp(x, x+nx), xm(x, x+nx);
-        
-        //sensitivities
-        for (int j = 0; j < nx; ++j) {
-            xp[j] = x[j] + eps;
-            xm[j] = x[j] - eps;
-            myfnn(nx, xp.data(), fnn_p.data());
-            myfnn(nx, xm.data(), fnn_m.data());
-            for (int i = 0; i < nx; ++i) {
-                Jnn[i + j*nx] = (fnn_p[i] - fnn_m[i]) / (2*eps);
-            }
-            xp[j] = xm[j] = x[j];
-        }
-
-        //full jacobian
-        for (int i = 0; i < nx; ++i) {
-            for (int j = 0; j < nx; ++j) {
-                double dy_dx  = integrator->sensitivity(i, j);
-                double dnn_dx = Jnn[i + j*nx];
-                g[i + j*nx]   = dy_dx - (i==j ? 1.0 : 0.0) - dnn_dx;
-            }
-        }
-    }
-    // { 
+    { 
  
-    //     double xp[nx]; 
-    //     double xm[nx]; 
-    //     double fp[nf]; 
-    //     double fm[nf]; 
+        double xp[nx]; 
+        double xm[nx]; 
+        double fp[nf]; 
+        double fm[nf]; 
  
-    //     for (int ii = 0; ii < nx; ii++) 
-    //     { 
+        for (int ii = 0; ii < nx; ii++) 
+        { 
  
-    //         for (int jj = 0; jj < nx; jj++) 
-    //         { 
-    //             xp[jj] = x[jj]; 
-    //             xm[jj] = x[jj]; 
-    //         } 
+            for (int jj = 0; jj < nx; jj++) 
+            { 
+                xp[jj] = x[jj]; 
+                xm[jj] = x[jj]; 
+            } 
  
-    //         xp[ii] += dx; 
-    //         xm[ii] -= dx; 
+            xp[ii] += dx; 
+            xm[ii] -= dx; 
  
-    //         tnow = 0.0; 
-    //         fromxhat(xp, ptcl, nx, rusr); 
-    //         T[0] = ptcl[0]; 
-    //         for (int ii = 1; ii < nx; ii++) 
-    //         { 
-    //             Y[ii - 1] = ptcl[ii]; 
-    //         } 
-    //         gas->setState_TPY(T[0], p, Y); 
-    //         integrator->initialize(tnow, odes); 
-    //         integrator->integrate(dt); 
-    //         solution = integrator->solution(); 
-    //         toxhat(solution, fp, nx, rusr); 
-    //         myfnn(nx, xp, fnn); 
-    //         for (int ii = 0; ii < nx; ii++) 
-    //         { 
-    //             fp[ii] = fp[ii] - xp[ii] - fnn[ii]; 
-    //         } 
+            tnow = 0.0; 
+            fromxhat(xp, ptcl, nx, rusr); 
+            T[0] = ptcl[0]; 
+            for (int ii = 1; ii < nx; ii++) 
+            { 
+                Y[ii - 1] = ptcl[ii]; 
+            } 
+            gas->setState_TPY(T[0], p, Y); 
+            integrator->initialize(tnow, odes); 
+            integrator->integrate(dt); 
+            solution = integrator->solution(); 
+            toxhat(solution, fp, nx, rusr); 
+            myfnn(nx, xp, fnn); 
+            for (int ii = 0; ii < nx; ii++) 
+            { 
+                fp[ii] = fp[ii] - xp[ii] - fnn[ii]; 
+            } 
  
-    //         tnow = 0.0; 
-    //         fromxhat(xm, ptcl, nx, rusr); 
-    //         T[0] = ptcl[0]; 
-    //         for (int ii = 1; ii < nx; ii++) 
-    //         { 
-    //             Y[ii - 1] = ptcl[ii]; 
-    //         } 
-    //         gas->setState_TPY(T[0], p, Y); 
-    //         integrator->initialize(tnow, odes); 
-    //         integrator->integrate(dt); 
-    //         solution = integrator->solution(); 
-    //         toxhat(solution, fm, nx, rusr); 
-    //         myfnn(nx, xm, fnn); 
-    //         for (int ii = 0; ii < nx; ii++) 
-    //         { 
-    //             fm[ii] = fm[ii] - xm[ii] - fnn[ii]; 
-    //         } 
-            
-    //         // central difference
-    //         for (int jj = 0; jj < nx; jj++) 
-    //         { 
-    //             g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx); 
-    //         } 
-    //     } 
-    // }
-    // //END OF JACOBIAN
+            tnow = 0.0; 
+            fromxhat(xm, ptcl, nx, rusr); 
+            T[0] = ptcl[0]; 
+            for (int ii = 1; ii < nx; ii++) 
+            { 
+                Y[ii - 1] = ptcl[ii]; 
+            } 
+            gas->setState_TPY(T[0], p, Y); 
+            integrator->initialize(tnow, odes); 
+            integrator->integrate(dt); 
+            solution = integrator->solution(); 
+            toxhat(solution, fm, nx, rusr); 
+            myfnn(nx, xm, fnn); 
+            for (int ii = 0; ii < nx; ii++) 
+            { 
+                fm[ii] = fm[ii] - xm[ii] - fnn[ii]; 
+            } 
+ 
+            // calculate the gradient of fnn subtracting the gradient of the function using central difference. 
+            for (int jj = 0; jj < nx; jj++) 
+            { 
+                g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx); 
+            } 
+        } 
+    } 
 } 
  
 void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[]) 
