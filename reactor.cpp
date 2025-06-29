@@ -227,12 +227,15 @@ public:
     }
 
     //CVODES
-    void sensParams(double* p, double* pbar) const override {
+    void sensParams(double* p, double* pbar) const {
         for (size_t i = 0; i < m_nEqs; ++i) {
             p[i]    = m_sens_params[i];
             pbar[i] = m_paramScales[i];
         }
     }
+
+    std::vector<double> m_sens_params; //CVODES
+    std::vector<double> m_paramScales; //CVODES
  
 private: 
     // private member variables, to be used internally. 
@@ -243,8 +246,6 @@ private:
     double m_pressure; 
     size_t m_nSpecies; 
     size_t m_nEqs; 
-    std::vector<double> m_sens_params; //CVODES
-    std::vector<double> m_paramScales; //CVODES
 }; 
  
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[]) 
@@ -377,7 +378,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     odes.m_paramScales.resize(nx);
     for (int i = 0; i < nx; ++i) {
         // odes.m_sens_params[i] = x[i];   
-        odes.m_sens_params[i] = ptcl[i]
+        odes.m_sens_params[i] = ptcl[i];
         odes.m_paramScales[i] = 1.0;   // unit scaling → dY/dx raw
     }
 
