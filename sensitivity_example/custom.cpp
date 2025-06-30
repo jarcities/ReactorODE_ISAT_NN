@@ -1,4 +1,6 @@
-//ORIGINAL EXAMPLE
+////////////////////////
+////ORIGINAL EXAMPLE////
+////////////////////////
 // /*
 //  * Custom reactor
 //  * ==============
@@ -261,8 +263,9 @@
 
 
 
-
-//USING SENSITIVITIES
+///////////////////////////
+////USING SENSITIVITIES////
+///////////////////////////
 #include "cantera/core.h"
 #include "cantera/numerics/Integrator.h"
 #include <fstream>
@@ -283,7 +286,7 @@ public:
         m_wdot.resize(m_nSpecies);
         m_nEqs = m_nSpecies + 1;
 
-        //sensitivity calc: inform integrator of one parameter
+        //sensitivity calc, only using one parameter (temp.)
         m_sens_params.resize(1); //sensitivity calc
         m_paramScales.resize(1); //sensitivity calc        
         m_sens_params[0] = m_gas->temperature(); //sensitivity calc
@@ -368,10 +371,10 @@ int main() {
     double tfinal = 1e-3;
     double dt = 1e-5;
 
-    //create and configure CVODE integrator
-    auto integrator = newIntegrator("CVODE");
-    integrator->setMethod(BDF_Method);             
-    integrator->setLinearSolverType("DENSE");    
+    //cvodes object and functions
+    auto integrator = newIntegrator("CVODE"); //CVODES does not work
+    integrator->setMethod(BDF_Method); //sensitivity calc        
+    integrator->setLinearSolverType("DENSE"); //sensitivity calc
     integrator->setTolerances(1e-9, 1e-15);
     integrator->setSensitivityTolerances(1e-6, 1e-8); //sensitivity calc
     integrator->initialize(t0, odes);
