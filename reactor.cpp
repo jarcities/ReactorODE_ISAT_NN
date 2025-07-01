@@ -357,9 +357,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
 
-    integrator -> setMethod(BDF_Method);
+    integrator -> setMethod(BDF_Method); //sensitivity calc
 
-    integrator->setTolerances(aTol, rTol);
+    integrator->setLinearSolverType("DENSE"); //sensitivity calc
+
+    integrator->setTolerances(aTol, rTol); //rearranged for sensitivity calc
 
     integrator->initialize(tnow, odes);
 
