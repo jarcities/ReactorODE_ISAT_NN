@@ -357,6 +357,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
 
+    integrator -> setMethod(BDF_Method);
+
     integrator->setTolerances(aTol, rTol);
 
     integrator->initialize(tnow, odes);
