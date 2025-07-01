@@ -232,14 +232,14 @@ public:
         return m_nEqs;
     }
 
-    void getSensParams(double* params) const override {
+    void getSensParams(double* params) const {
         //sensitivity calc: provide initial parameter values
         for (size_t i = 0; i < m_sens_params.size(); i++) {
             params[i] = m_sens_params[i];
         }
     }
 
-    void getSensScales(double* scales) const override {
+    void getSensScales(double* scales) const {
         //sensitivity calc: provide parameter scales
         for (size_t i = 0; i < m_paramScales.size(); i++) {
             scales[i] = m_paramScales[i];
@@ -432,7 +432,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
                 g[j + i * nx] = Jij;  
             }
         }
-    }
     }
     // { 
  
