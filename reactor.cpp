@@ -407,13 +407,32 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //JACOBIAN STARTS HERE
     if (need[1] == 1) 
     { //sensitivity calc
-        std::vector<double> Jnn(nx*nx, 0.0); //init fnn jacobian matrix
-        for (int j = 0; j < nx; j++) {
-            for (int i = 0; i < nx; i++) {
-                double sens = integrator->sensitivity(i, j); 
-                g[j + i*nx] = sens + Jnn[j + i*nx];        
+        // std::vector<double> Jnn(nx*nx, 0.0); //init fnn jacobian matrix
+        // for (int j = 0; j < nx; j++) {
+        //     for (int i = 0; i < nx; i++) {
+        //         double sens = integrator->sensitivity(i, j); 
+        //         g[j + i*nx] = sens + Jnn[j + i*nx];        
+        //     }
+        // }
+        double eps = 1e-6;
+        ReactorODEs odes_current(sol);
+        auto sensInt = newIntegrator("CVODE", odes_current);
+        sensInt->setMethod("BDF");
+        sensInt->setMaxOrder(5);
+        sensInt->setStateTolerance(1e-8, 1e-10);
+        sensInt->setSensitivityTolerances(1e-6, 1e-8);
+        sensInt->initialize(0.0, x);
+        sensInt->advance(eps);
+        
+        //fill jacobian
+        for (int i = 0; i < nx; i++) {
+            for (int j = 0; j < nx; j++) {
+                double s = sensInt->sensitivity(i, j);  
+                double Jij = (s - (i == j ? 1.0 : 0.0)) / eps;  
+                g[j + i * nx] = Jij;  
             }
         }
+    }
     }
     // { 
  
