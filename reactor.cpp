@@ -416,12 +416,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         // }
         double eps = 1e-6;
         ReactorODEs odes_current(sol);
-        auto sensInt = newIntegrator("CVODE", odes_current);
+        auto sensInt = newIntegrator("CVODE");
         sensInt->setMethod("BDF");
         sensInt->setMaxOrder(5);
         sensInt->setStateTolerance(1e-8, 1e-10);
         sensInt->setSensitivityTolerances(1e-6, 1e-8);
-        sensInt->initialize(0.0, x);
+        sensInt->initialize(0.0, odes_current);  
         sensInt->advance(eps);
         
         //fill jacobian
