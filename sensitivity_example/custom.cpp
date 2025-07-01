@@ -372,7 +372,7 @@ int main() {
     double dt = 1e-5;
 
     //cvodes object and functions
-    auto integrator = newIntegrator("CVODE"); //CVODES does not work
+    auto integrator = newIntegrator("CVODE"); 
     integrator->setMethod(BDF_Method); //sensitivity calc        
     integrator->setLinearSolverType("DENSE"); //sensitivity calc
     integrator->setTolerances(1e-9, 1e-15);
