@@ -355,8 +355,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     gas->setState_TPY(T[0], p, Y);
 
     /* --------------------- CREATE ODE RHS EVALUATOR --------------------- */
-    // ReactorODEs odes = ReactorODEs(sol); 
-    ReactorODEs odes(sol); //changed for sensitivity calc
+    ReactorODEs odes = ReactorODEs(sol); 
+    // ReactorODEs odes(sol); //changed for sensitivity calc
 
     double tnow = 0.0;
 
