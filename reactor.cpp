@@ -135,6 +135,11 @@ public:
         // number of equations in the ODE system. a conservation equation for each
         // species, plus a single energy conservation equation for the system.
         m_nEqs = m_nSpecies + 1;
+
+        m_sens_params.resize(1); //sensitivity calc
+        m_paramScales.resize(1); //sensitivity calc        
+        m_sens_params[0] = m_gas->temperature(); //sensitivity calc
+        m_paramScales[0] = m_gas->temperature(); //sensitivity calc
     }
 
     /**
