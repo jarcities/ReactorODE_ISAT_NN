@@ -361,6 +361,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     integrator->setLinearSolverType("DENSE"); //sensitivity calc
 
+    integrator->setSensitivityTolerances(aTol, rTol); //sensitivity calc
+
     integrator->setTolerances(aTol, rTol); //rearranged for sensitivity calc
 
     integrator->initialize(tnow, odes);
