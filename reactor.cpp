@@ -401,7 +401,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         double eps = 1e-6; 
         for (int i = 0; i < nx; i++) { 
             for (int j = 0; j < nx; j++) { 
-                double s = integrator->sensitivity(i, j);   
+                double s = integrator->sensitivity(0, 0);   
                 double J = (s - (i == j ? 1.0 : 0.0)) / eps;   
                 g[j + i * nx] = J;   
             } 
