@@ -398,66 +398,75 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // START OF JACOBIAN
     if (need[1] == 1)
     {
-
-        double xp[nx];
-        double xm[nx];
-        double fp[nf];
-        double fm[nf];
-
-        for (int ii = 0; ii < nx; ii++)
-        {
-
-            for (int jj = 0; jj < nx; jj++)
-            {
-                xp[jj] = x[jj];
-                xm[jj] = x[jj];
-            }
-
-            xp[ii] += dx;
-            xm[ii] -= dx;
-
-            tnow = 0.0;
-            fromxhat(xp, ptcl, nx, rusr);
-            T[0] = ptcl[0];
-            for (int ii = 1; ii < nx; ii++)
-            {
-                Y[ii - 1] = ptcl[ii];
-            }
-            gas->setState_TPY(T[0], p, Y);
-            integrator->initialize(tnow, odes);
-            integrator->integrate(dt);
-            solution = integrator->solution();
-            toxhat(solution, fp, nx, rusr);
-            myfnn(nx, xp, fnn);
-            for (int ii = 0; ii < nx; ii++)
-            {
-                fp[ii] = fp[ii] - xp[ii] - fnn[ii];
-            }
-
-            tnow = 0.0;
-            fromxhat(xm, ptcl, nx, rusr);
-            T[0] = ptcl[0];
-            for (int ii = 1; ii < nx; ii++)
-            {
-                Y[ii - 1] = ptcl[ii];
-            }
-            gas->setState_TPY(T[0], p, Y);
-            integrator->initialize(tnow, odes);
-            integrator->integrate(dt);
-            solution = integrator->solution();
-            toxhat(solution, fm, nx, rusr);
-            myfnn(nx, xm, fnn);
-            for (int ii = 0; ii < nx; ii++)
-            {
-                fm[ii] = fm[ii] - xm[ii] - fnn[ii];
-            }
-
-            for (int jj = 0; jj < nx; jj++)
-            {
-                g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
-            }
-        }
+        double eps = 1e-6; 
+        for (int i = 0; i < nx; i++) { 
+            for (int j = 0; j < nx; j++) { 
+                double s = integrator->sensitivity(i, j);   
+                double J = (s - (i == j ? 1.0 : 0.0)) / eps;   
+                g[j + i * nx] = J;   
+            } 
+        } 
     }
+    // {
+    //     double xp[nx];
+    //     double xm[nx];
+    //     double fp[nf];
+    //     double fm[nf];
+
+    //     for (int ii = 0; ii < nx; ii++)
+    //     {
+
+    //         for (int jj = 0; jj < nx; jj++)
+    //         {
+    //             xp[jj] = x[jj];
+    //             xm[jj] = x[jj];
+    //         }
+
+    //         xp[ii] += dx;
+    //         xm[ii] -= dx;
+
+    //         tnow = 0.0;
+    //         fromxhat(xp, ptcl, nx, rusr);
+    //         T[0] = ptcl[0];
+    //         for (int ii = 1; ii < nx; ii++)
+    //         {
+    //             Y[ii - 1] = ptcl[ii];
+    //         }
+    //         gas->setState_TPY(T[0], p, Y);
+    //         integrator->initialize(tnow, odes);
+    //         integrator->integrate(dt);
+    //         solution = integrator->solution();
+    //         toxhat(solution, fp, nx, rusr);
+    //         myfnn(nx, xp, fnn);
+    //         for (int ii = 0; ii < nx; ii++)
+    //         {
+    //             fp[ii] = fp[ii] - xp[ii] - fnn[ii];
+    //         }
+
+    //         tnow = 0.0;
+    //         fromxhat(xm, ptcl, nx, rusr);
+    //         T[0] = ptcl[0];
+    //         for (int ii = 1; ii < nx; ii++)
+    //         {
+    //             Y[ii - 1] = ptcl[ii];
+    //         }
+    //         gas->setState_TPY(T[0], p, Y);
+    //         integrator->initialize(tnow, odes);
+    //         integrator->integrate(dt);
+    //         solution = integrator->solution();
+    //         toxhat(solution, fm, nx, rusr);
+    //         myfnn(nx, xm, fnn);
+    //         for (int ii = 0; ii < nx; ii++)
+    //         {
+    //             fm[ii] = fm[ii] - xm[ii] - fnn[ii];
+    //         }
+
+    //         for (int jj = 0; jj < nx; jj++)
+    //         {
+    //             g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
+    //         }
+    //     }
+    // }
     // END OF JACOBIAN
 }
 
