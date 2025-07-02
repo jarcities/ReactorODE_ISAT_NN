@@ -218,11 +218,12 @@ public:
         m_gas->getMassFractions(&y[1]);
     }
 
-    //sensitivity calc start
-    // size_t nparams() const override {
+    // sensitivity calc start
+    // size_t nparams() const override
+    // {
     //     return 1;
     // }
-    //sensitivity calc end
+    // sensitivity calc end
 
 private:
     // private member variables, to be used internally.
@@ -355,8 +356,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     gas->setState_TPY(T[0], p, Y);
 
     /* --------------------- CREATE ODE RHS EVALUATOR --------------------- */
-    ReactorODEs odes = ReactorODEs(sol); 
-    // ReactorODEs odes(sol); //changed for sensitivity calc
+    // ReactorODEs odes = ReactorODEs(sol);
+    ReactorODEs odes(sol); // changed for sensitivity calc
 
     double tnow = 0.0;
 
@@ -364,13 +365,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
 
-    integrator -> setMethod(BDF_Method); //sensitivity calc
+    integrator->setMethod(BDF_Method); // sensitivity calc
 
-    integrator->setLinearSolverType("DENSE"); //sensitivity calc
+    integrator->setLinearSolverType("DENSE"); // sensitivity calc
 
-    integrator->setSensitivityTolerances(aTol, rTol); //sensitivity calc
+    integrator->setSensitivityTolerances(aTol, rTol); // sensitivity calc
 
-    integrator->setTolerances(aTol, rTol); //rearranged for sensitivity calc
+    integrator->setTolerances(aTol, rTol); // rearranged for sensitivity calc
 
     integrator->initialize(tnow, odes);
 
@@ -389,7 +390,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         f[ii] = f[ii] - x[ii] - fnn[ii];
     }
 
-    //START OF JACOBIAN
+    // START OF JACOBIAN
     if (need[1] == 1)
     {
 
@@ -452,7 +453,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
     }
-    //END OF JACOBIAN
+    // END OF JACOBIAN
 }
 
 void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[])
