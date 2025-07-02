@@ -219,9 +219,9 @@ public:
     }
 
     //sensitivity calc start
-    size_t nparams() const override {
-        return 1;
-    }
+    // size_t nparams() const override {
+    //     return 1;
+    // }
     //sensitivity calc end
 
 private:
