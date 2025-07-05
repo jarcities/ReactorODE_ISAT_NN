@@ -263,6 +263,26 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ///////////////////////////
 ////USING SENSITIVITIES////
 ///////////////////////////
@@ -270,70 +290,201 @@
 #include "cantera/numerics/Integrator.h"
 #include <fstream>
 #include <iostream>
+#include <filesystem>
+#include <algorithm>
+namespace fs = std::filesystem;
 
 using namespace Cantera;
 
-class ReactorODEs : public FuncEval {
+class ReactorODEs : public FuncEval
+{
 public:
-    ReactorODEs(shared_ptr<Solution> sol) {
+    ReactorODEs(shared_ptr<Solution> sol)
+    {
         m_gas = sol->thermo();
         m_kin = sol->kinetics();
         m_pressure = m_gas->pressure();
         m_nSpecies = m_gas->nSpecies();
 
-        //allocate storage for enthalpies and reaction rates
+        // allocate storage for enthalpies and reaction rates
         m_hbar.resize(m_nSpecies);
         m_wdot.resize(m_nSpecies);
-        m_nEqs = m_nSpecies + 1;
+        // m_nEqs = m_nSpecies + 1; //this
+        m_nPrimary = m_nSpecies + 1; // that
+        m_nEqs = m_nPrimary * 2;     // that
 
-        //sensitivity calc, only using one parameter (temp.)
-        m_sens_params.resize(1); //sensitivity calc
-        m_paramScales.resize(1); //sensitivity calc        
-        m_sens_params[0] = m_gas->temperature(); //sensitivity calc
-        m_paramScales[0] = m_gas->temperature(); //sensitivity calc
+        // sensitivity calc, only using one parameter (temp.)
+        m_sens_params.resize(1);                 // sensitivity calc
+        m_paramScales.resize(1);                 // sensitivity calc
+        m_sens_params[0] = m_gas->temperature(); // sensitivity calc
+        m_paramScales[0] = m_gas->temperature(); // sensitivity calc
     }
 
-    void eval(double t, double* y, double* ydot, double* p) override {
+    // void eval(double t, double *y, double *ydot, double *p) override
+    // {
+    //     double T = y[0];
+    //     double *Ys = &y[1];
+    //     double *dTdt = &ydot[0];
+    //     double *dYdt = &ydot[1];
+
+    //     m_gas->setMassFractions_NoNorm(Ys);
+    //     m_gas->setState_TP(T, m_pressure);
+
+    //     double rho = m_gas->density();
+    //     double cp = m_gas->cp_mass();
+    //     m_gas->getPartialMolarEnthalpies(m_hbar.data());
+    //     m_kin->getNetProductionRates(m_wdot.data());
+
+    //     double hdot_vol = 0.0;
+    //     for (size_t k = 0; k < m_nSpecies; ++k)
+    //     {
+    //         hdot_vol += m_hbar[k] * m_wdot[k];
+    //     }
+    //     *dTdt = -hdot_vol / (rho * cp);
+        
+    //     for (size_t k = 0; k < m_nSpecies; ++k)
+    //     {
+    //         dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
+    //     }
+
+    //     //............................................................
+    //     double sT = y[m_nPrimary + 0];
+
+    //     vector<double> dwdot_dT(m_nSpecies);
+    //     m_kin->getNetProductionRates_ddT(dwdot_dT.data());
+
+    //     double eps = 1e-8 * std::max(1.0, T);
+    //     vector<double> hbar_p(m_nSpecies), hbar_m(m_nSpecies);
+    //     m_gas->setState_TP(T + eps, m_pressure);
+    //     m_gas->getPartialMolarEnthalpies(hbar_p.data());
+    //     m_gas->setState_TP(T - eps, m_pressure);
+    //     m_gas->getPartialMolarEnthalpies(hbar_m.data());
+    //     m_gas->setState_TP(T, m_pressure);
+
+    //     double sum1 = 0.0, sum2 = 0.0;
+    //     for (size_t k = 0; k < m_nSpecies; ++k)
+    //     {
+    //         double dhbar_dT = (hbar_p[k] - hbar_m[k]) / (2 * eps);
+    //         sum1 += m_hbar[k] * dwdot_dT[k];
+    //         sum2 += m_wdot[k] * dhbar_dT;
+    //     }
+    //     double df_dT = -(sum1 + sum2) / (rho * cp);
+    //     ydot[m_nPrimary + 0] = df_dT * sT;
+
+    //     double drho_dT = -rho * m_gas->thermalExpansionCoeff();
+    //     for (size_t k = 0; k < m_nSpecies; ++k)
+    //     {
+    //         double MW = m_gas->molecularWeight(k);
+    //         double term = dwdot_dT[k] + m_wdot[k] * (drho_dT / rho);
+    //         ydot[m_nPrimary + 1 + k] = (MW / rho) * term * sT;
+    //     }
+    //     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    // }
+    void eval(double t, double* y, double* ydot, double* p) override
+    {
         double T = y[0];
-        double* Ys = &y[1];
+        double* Ys  = &y[1];
         double* dTdt = &ydot[0];
         double* dYdt = &ydot[1];
 
-        //update state from solution
         m_gas->setMassFractions_NoNorm(Ys);
         m_gas->setState_TP(T, m_pressure);
 
-        //thermodynamic and kinetic properties
         double rho = m_gas->density();
-        double cp = m_gas->cp_mass();
+        double cp  = m_gas->cp_mass();
         m_gas->getPartialMolarEnthalpies(m_hbar.data());
-        m_kin->getNetProductionRates(m_wdot.data());
+        m_kin->getNetProductionRates       (m_wdot.data());
 
-        //energy equation
-        double hdot_vol = 0;
-        for (size_t k = 0; k < m_nSpecies; k++) {
+        double hdot_vol = 0.0;
+        for (size_t k = 0; k < m_nSpecies; ++k) {
             hdot_vol += m_hbar[k] * m_wdot[k];
         }
         *dTdt = -hdot_vol / (rho * cp);
 
-        //species equations
-        for (size_t k = 0; k < m_nSpecies; k++) {
-            dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
+        for (size_t k = 0; k < m_nSpecies; ++k) {
+            double MW = m_gas->molecularWeight(k);
+            dYdt[k] = m_wdot[k] * MW / rho;
         }
+
+        //............................................................
+        double sT = y[m_nPrimary + 0];
+
+        vector<double> dwdot_dT(m_nSpecies);
+        m_kin->getNetProductionRates_ddT(dwdot_dT.data());
+
+        double eps = 1e-5 * std::max(1.0, T);
+        vector<double> hbar_p(m_nSpecies), hbar_m(m_nSpecies);
+        m_gas->setState_TP(T + eps, m_pressure);
+        m_gas->getPartialMolarEnthalpies(hbar_p.data());
+        m_gas->setState_TP(T - eps, m_pressure);
+        m_gas->getPartialMolarEnthalpies(hbar_m.data());
+        m_gas->setState_TP(T, m_pressure);
+
+        m_gas->setState_TP(T + eps, m_pressure);
+        double cp_p = m_gas->cp_mass();
+        m_gas->setState_TP(T - eps, m_pressure);
+        double cp_m = m_gas->cp_mass();
+        m_gas->setState_TP(T, m_pressure);
+        double d_cp_dT = (cp_p - cp_m) / (2 * eps);
+
+        double d_rho_dT = -rho * m_gas->thermalExpansionCoeff();
+
+        double sum1 = 0.0, sum2 = 0.0;
+        for (size_t k = 0; k < m_nSpecies; ++k) {
+            double dh_dT = (hbar_p[k] - hbar_m[k]) / (2 * eps);
+            sum1 += m_hbar[k] * dwdot_dT[k];
+            sum2 += m_wdot[k]  * dh_dT;
+        }
+        double df_dT = - (sum1 + sum2) / (rho * cp);
+        df_dT -= hdot_vol * (
+            (rho * d_cp_dT + cp * d_rho_dT)
+            / ((rho * cp) * (rho * cp))
+        );
+        ydot[m_nPrimary + 0] = df_dT * sT;
+
+        for (size_t k = 0; k < m_nSpecies; ++k) {
+            double MW     = m_gas->molecularWeight(k);
+            double term   = dwdot_dT[k] + m_wdot[k] * (d_rho_dT / rho);
+            ydot[m_nPrimary + 1 + k] = (MW / rho) * term * sT;
+        }
+        //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     }
 
-    size_t neq() const override {
+
+    size_t neq() const override
+    {
         return m_nEqs;
     }
 
-    void getState(double* y) override {
+    void getState(double *y) override
+    {
         y[0] = m_gas->temperature();
         m_gas->getMassFractions(&y[1]);
+
+        // sensitivity calc
+        y[m_nPrimary + 0] = 1.0;
+        for (size_t k = 1; k < m_nPrimary; ++k)
+        {
+            y[m_nPrimary + k] = 0.0;
+        }
     }
 
-    //sensitivity calc
-    size_t nparams() const override {
+    // sensitivity calc
+    size_t nparams() const override
+    {
         return 1;
+    }
+
+    // sensitivity calc
+    void getSensParams(double *p) const
+    {
+        p[0] = m_sens_params[0];
+    }
+
+    // sensitivity calc
+    void getSensScales(double *p) const
+    {
+        p[0] = m_paramScales[0];
     }
 
 private:
@@ -344,58 +495,104 @@ private:
     double m_pressure;
     size_t m_nSpecies;
     size_t m_nEqs;
+    size_t m_nPrimary;
 };
 
-int main() {
+int main()
+{
+    // init new gas
     auto sol = newSolution("h2o2.yaml", "ohmech", "none");
     auto gas = sol->thermo();
     gas->setState_TPX(1001, OneAtm, "H2:2, O2:1, N2:4");
 
-    std::ofstream outFile("custom_sensitivity_improved.csv");
-    outFile << "time,temp";
-    for (size_t k = 0; k < gas->nSpecies(); k++) 
-    {
-        outFile << ",Y_" << gas->speciesName(k);
-    }
-
-    //sensitivity calc
-    outFile << ",dT/dT0";
-    for (size_t k = 0; k < gas->nSpecies(); k++) 
-    {
-        outFile << ",dY_" << gas->speciesName(k) << "/dT0"; 
-    } 
-    outFile << "\n";
-
+    // new reactor object
     ReactorODEs odes(sol);
     double t0 = 0.0;
     double tfinal = 1e-3;
     double dt = 1e-5;
+    double reltol = 1e-9;
+    double abstol = 1e-15;
+    double sensreltol = 1e-6;
+    double sensabstol = 1e-8;
 
-    //cvodes object and functions
-    auto integrator = newIntegrator("CVODE"); 
-    integrator->setMethod(BDF_Method); //sensitivity calc        
-    integrator->setLinearSolverType("DENSE"); //sensitivity calc
-    integrator->setTolerances(1e-9, 1e-15);
-    integrator->setSensitivityTolerances(1e-6, 1e-8); //sensitivity calc
+    // cvodes object and functions
+    auto integrator = newIntegrator("CVODE");
+    integrator->setMethod(BDF_Method);        // sensitivity calc
+    integrator->setLinearSolverType("DENSE"); // sensitivity calc
+    integrator->setTolerances(reltol, abstol);
+    integrator->setSensitivityTolerances(sensreltol, sensabstol); // sensitivity calc
     integrator->initialize(t0, odes);
+    size_t npar = odes.nparams();
+    std::vector<double> s0(odes.neq(), 0.0);
+    s0[0] = 1.0;
+
+    //..........................................................
+    // dt for central difference
+    const double dT0 = 1e-4;
+
+    // forward perturbed
+    auto sol_f = newSolution("h2o2.yaml", "ohmech", "none");
+    auto gas_f = sol_f->thermo();
+    gas_f->setState_TPX(1001 + dT0, OneAtm, "H2:2, O2:1, N2:4");
+    ReactorODEs odes_f(sol_f);
+    auto int_f = newIntegrator("CVODE");
+    int_f->setMethod(BDF_Method);
+    int_f->setLinearSolverType("DENSE");
+    int_f->setTolerances(reltol, abstol);
+    int_f->initialize(t0, odes_f);
+
+    // backward perturbed
+    auto sol_b = newSolution("h2o2.yaml", "ohmech", "none");
+    auto gas_b = sol_b->thermo();
+    gas_b->setState_TPX(1001 - dT0, OneAtm, "H2:2, O2:1, N2:4");
+    ReactorODEs odes_b(sol_b);
+    auto int_b = newIntegrator("CVODE");
+    int_b->setTolerances(reltol, abstol);
+    int_b->setMethod(BDF_Method);
+    int_b->setLinearSolverType("DENSE");
+    int_b->setTolerances(reltol, abstol);
+    int_b->initialize(t0, odes_b);
+    //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    // create csv file headers
+    fs::create_directories("bin");
+    std::vector<std::ofstream> file(gas->nSpecies());
+    for (size_t k = 0; k < gas->nSpecies(); ++k)
+    {
+        std::string fname = "bin/" + gas->speciesName(k) + ".csv";
+        file[k].open(fname);
+        file[k] << "time,temp,"
+                << "Y_" << gas->speciesName(k) << ','
+                << "dY_" << gas->speciesName(k) << "/dT0,"
+                << "dY_" << gas->speciesName(k) << "/dT0_CD\n";
+    }
 
     double t = t0;
-    while (t < tfinal) {
+    while (t < tfinal)
+    {
         t += dt;
         integrator->integrate(t);
-        double* soln = integrator->solution();
+        double *soln = integrator->solution();
 
-        outFile << t << "," << soln[0];
-        for (size_t i = 1; i < odes.neq(); i++) {
-            outFile << "," << soln[i];
-        }
+        //..............................
+        // central difference
+        int_f->integrate(t);
+        int_b->integrate(t);
+        double *yf = int_f->solution();
+        double *yb = int_b->solution();
+        //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-        //sensitivity calc
-        outFile << "," << integrator->sensitivity(0, 0);
-        for (size_t i = 1; i < odes.neq(); i++) {
-            outFile << "," << integrator->sensitivity(i, 0);
+        for (size_t k = 0; k < gas->nSpecies(); ++k)
+        {
+            double *soln = integrator->solution();
+            double *sens = soln + odes.nparams() * 0 + odes.neq() / 2;
+            file[k] << t
+                    << ',' << soln[0]
+                    << ',' << soln[1 + k]
+                    << ',' << sens[1 + k]
+                    << ',' << (yf[1 + k] - yb[1 + k]) / (2.0 * dT0)
+                    << '\n';
         }
-        outFile << "\n";
     }
 
     return 0;
