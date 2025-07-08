@@ -11,6 +11,7 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <string>
 
 namespace fs = std::filesystem;
 using namespace Cantera;
@@ -22,34 +23,41 @@ int main()
     std::chrono::duration<double> jac_total{};
     std::chrono::duration<double> cd_total{};
 
-    //init solution and states
-    auto sol = newSolution("h2o2.yaml", "ohmech", "none");
-    auto gas = sol->thermo();
-    gas->setState_TPX(1001.0, OneAtm, "H2:2, O2:1, N2:4");
+    //set mechanisms
+    std::string mechanism_ = "nDodecane_Reitz.yaml";
+    std::string name_ = "nDodecane_IG";
+    std::string comp_mix = "c12h26:1, o2:1, n2:3.76";
+    double temp_ = 1001.0; //kelvin
+    double pressure_ = OneAtm;
+
+    //init times
     const double t0 = 0.0;
     const double tfinal = 1e-3;
-    const double dt = 1e-5;
-    const double dT0 = 1e-5; //1e-6 and lower
+    const double dt = 1e-6;
+    const double dT0 = 1e-6; //1e-6 and lower
 
-    //new reactor object
+    //regular solution for jacobian
+    auto sol = newSolution(mechanism_, name_, "none");
+    auto gas = sol->thermo();
+    gas->setState_TPX(temp_, pressure_, comp_mix);
     auto base_r = newReactor("ConstPressureReactor", sol);
     auto reactor = std::static_pointer_cast<Reactor>(base_r);
     ReactorNet net;
     net.addReactor(*reactor);
 
     //forward perturbation for central difference
-    auto sol_f = newSolution("h2o2.yaml", "ohmech", "none");
+    auto sol_f = newSolution(mechanism_, name_, "none");
     auto gas_f = sol_f->thermo();
-    gas_f->setState_TPX(1001.0 + dT0, OneAtm, "H2:2, O2:1, N2:4");
+    gas_f->setState_TPX(temp_ + dT0, pressure_, comp_mix);
     auto base_rf = newReactor("ConstPressureReactor", sol_f);
     auto r_f = std::static_pointer_cast<Reactor>(base_rf);
     ReactorNet net_f;
     net_f.addReactor(*r_f);
 
     //backward perturbation for central difference
-    auto sol_b = newSolution("h2o2.yaml", "ohmech", "none");
+    auto sol_b = newSolution(mechanism_, name_, "none");
     auto gas_b = sol_b->thermo();
-    gas_b->setState_TPX(1001.0 - dT0, OneAtm, "H2:2, O2:1, N2:4");
+    gas_b->setState_TPX(temp_ - dT0, pressure_, comp_mix);
     auto base_rb = newReactor("ConstPressureReactor", sol_b);
     auto r_b = std::static_pointer_cast<Reactor>(base_rb);
     ReactorNet net_b;
@@ -65,6 +73,7 @@ int main()
 
     //open csv files
     size_t n_species = gas->nSpecies();
+    std::cout << "no. of species = " << n_species << std::endl;
     fs::create_directories("bin");
     std::vector<std::ofstream> files(n_species);
     for (size_t k = 0; k < n_species; k++)
