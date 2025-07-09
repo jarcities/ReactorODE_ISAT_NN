@@ -378,8 +378,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //integrate
     net.advance(dt);
-    size_t neq = gas->neq();
+
+    //stuff stuff
+    size_t neq = reactor->neq();
     std::array<double, neq> y;
+    size_t n_species = gas->nSpecies();
     
     //get state and normalize
     solution = reactor->getState(y.data());
