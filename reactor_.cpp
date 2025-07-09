@@ -381,7 +381,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //stuff stuff
     size_t neq = reactor->neq();
-    std::array<double, neq> y;
+    std::vector<double> y(neq);
     size_t n_species = gas->nSpecies();
     
     //get state and normalize
