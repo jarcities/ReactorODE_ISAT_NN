@@ -6,5 +6,5 @@ main
 *.op
 .DS_Store
 sensitivity_example/bin/
-.vscode
+.vscode/
 sensitivity_example/custom
