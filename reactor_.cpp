@@ -385,8 +385,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     size_t n_species = gas->nSpecies();
     
     //get state and normalize
-    solution = reactor->getState(y.data());
-    toxhat(solution, f, nx, rusr);
+    reactor->getState(y.data());
+    toxhat(y, f, nx, rusr);
     myfnn(nx, x, fnn);
 
     //get reduced state
