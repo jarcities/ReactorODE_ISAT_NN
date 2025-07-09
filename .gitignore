@@ -6,5 +6,5 @@ main
 *.op
 .DS_Store
 jacobian_example/bin/
-.vscode/*
 jacobian_example/custom
+.vscode/
