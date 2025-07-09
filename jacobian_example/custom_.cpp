@@ -12,6 +12,7 @@
 #include <memory>
 #include <chrono>
 #include <string>
+#include <iomanip>
 
 namespace fs = std::filesystem;
 using namespace Cantera;
@@ -30,17 +31,21 @@ int main()
     double temp_ = 1001.0; //kelvin
     double pressure_ = OneAtm;
 
+    //list of reactors classes to choose from:
+    //https://cantera.org/dev/cxx/db/d78/ReactorFactory_8cpp_source.html
+    std::string reactor_type = "IdealGasReactor";
+
     //init times
     const double t0 = 0.0;
     const double tfinal = 1e-3;
     const double dt = 1e-6;
-    const double dT0 = 1e-6; //1e-6 and lower
+    const double dT0 = 1e-8; //1e-6 and lower
 
     //regular solution for jacobian
     auto sol = newSolution(mechanism_, name_, "none");
     auto gas = sol->thermo();
     gas->setState_TPX(temp_, pressure_, comp_mix);
-    auto base_r = newReactor("ConstPressureReactor", sol);
+    auto base_r = newReactor(reactor_type, sol);
     auto reactor = std::static_pointer_cast<Reactor>(base_r);
     ReactorNet net;
     net.addReactor(*reactor);
@@ -49,7 +54,7 @@ int main()
     auto sol_f = newSolution(mechanism_, name_, "none");
     auto gas_f = sol_f->thermo();
     gas_f->setState_TPX(temp_ + dT0, pressure_, comp_mix);
-    auto base_rf = newReactor("ConstPressureReactor", sol_f);
+    auto base_rf = newReactor(reactor_type, sol_f);
     auto r_f = std::static_pointer_cast<Reactor>(base_rf);
     ReactorNet net_f;
     net_f.addReactor(*r_f);
@@ -58,7 +63,7 @@ int main()
     auto sol_b = newSolution(mechanism_, name_, "none");
     auto gas_b = sol_b->thermo();
     gas_b->setState_TPX(temp_ - dT0, pressure_, comp_mix);
-    auto base_rb = newReactor("ConstPressureReactor", sol_b);
+    auto base_rb = newReactor(reactor_type, sol_b);
     auto r_b = std::static_pointer_cast<Reactor>(base_rb);
     ReactorNet net_b;
     net_b.addReactor(*r_b);
@@ -83,7 +88,7 @@ int main()
         files[k]
             << "time,temp,"
             << "Y_" << name << ','
-            << "finiteDifferenceJacobian(),"
+            << "eigen jacobian,"
             << "reg. central difference\n";
         files[k] << std::fixed << std::setprecision(8);
     }
@@ -113,7 +118,7 @@ int main()
         std::chrono::duration<double> jac_diff = jac_end - jac_start; //timting
         jac_total += jac_diff; //timing
 
-        //go through each species
+        //SPECIES LOOP
         for (size_t k = 0; k < n_species; k++)
         {
 
@@ -141,11 +146,11 @@ int main()
 
             //print solutions
             files[k]
-                << t << ',' //time
-                << y[0] << ',' //temp
-                << Yk << ',' //species
-                << jac_fd << ',' //jacobian eigen
-                << central_diff << '\n'; //jacobian cent diff
+                << t << std::scientific << ',' //time
+                << y[0] << std::scientific << ',' //temp
+                << Yk << std::scientific << ',' //species
+                << jac_fd << std::scientific << ',' //jacobian eigen
+                << central_diff << std::scientific << '\n'; //jacobian cent diff
         }
     }
 
