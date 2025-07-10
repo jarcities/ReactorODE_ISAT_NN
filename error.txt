@@ -1,13 +1,28 @@
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ls
+A1.csv  A5.csv  B4.csv    clean.sh            jacobian_example  reactor.hpp
+A2.csv  B1.csv  B5.csv    driver_samples.f90  literature        README_TODO.txt
+A3.csv  B2.csv  bin       error.txt           reactor.cpp
+A4.csv  B3.csv  build.sh  extfgh.mod          reactor_.cpp
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./clean.sh 
+rm: cannot remove '*.o': No such file or directory
+rm: cannot remove 'main.exe': No such file or directory
+rm: cannot remove '*.log': No such file or directory
+rm: cannot remove '*.op': No such file or directory
+rm: cannot remove 'BIN/*.log': No such file or directory
+rm: cannot remove 'BIN/*.op': No such file or directory
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ clea
+-bash: clea: command not found
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./build.sh 
 ./build.sh: line 1: ﻿#!/bin/bash: No such file or directory
 icpx: warning: -lcantera: 'linker' input unused [-Wunused-command-line-argument]
 icpx: warning: argument unused during compilation: '-L/home/jsampayan4914/miniconda3/envs/intel_cantera/lib' [-Wunused-command-line-argument]
-reactor.cpp:419:24: error: no matching function for call to 'newIntegrator'
-  419 |         auto sensInt = newIntegrator("CVODE", odes_current);
-      |                        ^~~~~~~~~~~~~
-/home/jsampayan4914/miniconda3/envs/intel_cantera/include/cantera/numerics/Integrator.h:317:13: note: candidate function not viable: requires single argument 'itype', but 2 arguments were provided
-  317 | Integrator* newIntegrator(const string& itype);
-      |             ^             ~~~~~~~~~~~~~~~~~~~
+reactor_.cpp:389:5: error: no matching function for call to 'toxhat'
+  389 |     toxhat(y, f, nx, rusr);
+      |     ^~~~~~
+reactor_.cpp:257:6: note: candidate function not viable: no known conversion from 'std::vector<double>' to 'double *' for 1st argument
+  257 | void toxhat(double ptcl[], double x[], int &nx, double rusr[])
+      |      ^      ~~~~~~~~~~~~~
 1 error generated.
 ifx: error #10236: File not found: 'reactor.o'
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ls
+	
