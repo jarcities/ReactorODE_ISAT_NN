@@ -411,7 +411,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         //     g[k] = jac(k+1, 0);
         // }
 
-        Eigen::MatrixXd J_nn(nx, nx);
+        Eigen::MatrixXd jac_nn(nx, nx);
         const double eps = dx;  // reuse your finite-difference step
         std::vector<double> fnn_base(nx), fnn_p(nx), fnn_m(nx);
         myfnn(nx, x, fnn_base.data());
@@ -422,17 +422,17 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             myfnn(nx, x_p.data(), fnn_p.data());
             myfnn(nx, x_m.data(), fnn_m.data());
             for (int i = 0; i < nx; ++i) {
-                J_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
+                jac_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
             }
         }
 
-        // 3) Assemble full residual Jacobian: J = J_reac_{i+1,j} – I – J_nn
+        // 3) Assemble full residual Jacobian: J = J_reac_{i+1,j} – I – jac_nn
         //    (note the “+1” because J_reac rows start with temperature at row 0)
         for (int j = 0; j < nx; ++j) {
             for (int i = 0; i < nx; ++i) {
-                double d_reac = jac(i + 1, j);
+                double jac_eig = jac(i + 1, j);
                 double identity = (i == j ? 1.0 : 0.0);
-                g[i + j * nx] = d_reac - identity - J_nn(i, j);
+                g[i + j * nx] = jac_eig - identity - jac_nn(i, j);
             }
         }
     }
