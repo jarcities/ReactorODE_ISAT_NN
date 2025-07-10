@@ -361,24 +361,27 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //which Reactor ODE class?
     auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none");
+    std::cout<<"after newSolution()"<<std::endl;
 
     //set state
     auto gas = sol->thermo();
-    // gas->setState_TPY(T[0], p, Y);
-    gas->setMassFractions_NoNorm(Y);
-    gas->setState_TP(T[0], p);
-
+    std::cout<<"after thermo()"<<std::endl;
+    gas->setState_TPY(T[0], p, Y);
+    std::cout<<"after setState()"<<std::endl;
 
     //set reactor and mechanisms
     auto odes = newReactor("Reactor", sol); 
+    std::cout<<"after newReactor()"<<std::endl;
     auto reactor = std::static_pointer_cast<Reactor>(odes); 
     ReactorNet net;
     net.addReactor(*reactor);
+    std::cout<<"after addReactor()"<<std::endl;
 
     //time and init
     double tnow = 0.0;
     net.setInitialTime(tnow);
     net.initialize();
+    std::cout<<"after intialize()"<<std::endl;
 
     //integrate
     net.advance(dt);
