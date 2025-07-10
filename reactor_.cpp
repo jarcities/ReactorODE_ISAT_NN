@@ -386,7 +386,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     
     //get state and normalize
     reactor->getState(y.data());
-    toxhat(y, f, nx, rusr);
+    toxhat(y.data(), f, nx, rusr);
     myfnn(nx, x, fnn);
 
     //get reduced state
