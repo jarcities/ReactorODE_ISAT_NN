@@ -358,60 +358,38 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         Y[ii - 1] = ptcl[ii];
     }
 
-    // //which Reactor ODE class?
-    // auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none");
+    //which Reactor ODE class?
+    auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none");
 
-    // //set state
-    // auto gas = sol->thermo();
-    // gas->setState_TPY(T[0], p, Y);
-
-    // //set reactor and mechanisms
-    // auto odes = newReactor("Reactor", sol); 
-    // auto reactor = std::static_pointer_cast<Reactor>(odes); 
-    // ReactorNet net;
-    // net.addReactor(*reactor);
-
-    // //time and init
-    // double tnow = 0.0;
-    // net.setInitialTime(tnow);
-    // net.initialize();
-
-    // //integrate
-    // net.advance(dt);
-
-    // //stuff stuff
-    // size_t neq = reactor->neq();
-    // std::vector<double> y(neq);
-    // size_t n_species = gas->nSpecies();
-    
-    // //get state and normalize
-    // reactor->getState(y.data());
-    // toxhat(y.data(), f, nx, rusr);
-    // std::cout<<"after toxhat()"<<std::endl;
-    // myfnn(nx, x, fnn);
-    // std::cout<<"after myfnn()"<<std::endl;
-
-    auto sol     = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none");
-    auto gas     = sol->thermo();
+    //set state
+    auto gas = sol->thermo();
     gas->setState_TPY(T[0], p, Y);
 
-    // 1) build reactor network
-    auto reactor = newReactor("Reactor", sol);         // shared_ptr<ReactorBase>
+    //set reactor and mechanisms
+    auto odes = newReactor("Reactor", sol); 
+    auto reactor = std::static_pointer_cast<Reactor>(odes); 
     ReactorNet net;
     net.addReactor(*reactor);
 
-    // 2) match your old CVODE tolerances
-    double aTol = 1e-8, rTol = 1e-8;
-    net.setTolerances(aTol, rTol);
+    //time and init
+    double tnow = 0.0;
+    net.setInitialTime(tnow);
+    net.initialize();
 
-    // 3) integrate to t = dt
-    net.setInitialTime(0.0);
+    //integrate
     net.advance(dt);
 
-    // 4) pull out the new state and compute f
-    std::vector<double> y(reactor->neq());
+    //stuff stuff
+    size_t neq = reactor->neq();
+    std::vector<double> y(neq);
+    size_t n_species = gas->nSpecies();
+    
+    //get state and normalize
     reactor->getState(y.data());
     toxhat(y.data(), f, nx, rusr);
+    std::cout<<"after toxhat()"<<std::endl;
+    myfnn(nx, x, fnn);
+    std::cout<<"after myfnn()"<<std::endl;
 
     //get reduced state
     for (int ii = 0; ii < nx; ii++)
