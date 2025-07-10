@@ -430,7 +430,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         //    (note the “+1” because J_reac rows start with temperature at row 0)
         for (int j = 0; j < nx; ++j) {
             for (int i = 0; i < nx; ++i) {
-                double d_reac = J_reac(i + 1, j);
+                double d_reac = jac(i + 1, j);
                 double identity = (i == j ? 1.0 : 0.0);
                 g[i + j * nx] = d_reac - identity - J_nn(i, j);
             }
