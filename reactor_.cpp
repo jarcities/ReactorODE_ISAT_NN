@@ -330,7 +330,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
 
-    std::cout<<"entered myfgh()"<<std::endl;
+    // std::cout<<"entered myfgh()"<<std::endl;
     double Y[nx - 1]; //gas
     double T[1]; //temp
     double ptcl[nx]; 
