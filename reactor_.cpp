@@ -364,7 +364,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //set state
     auto gas = sol->thermo();
-    gas->setState_TPY(T[0], p, Y);
+    // gas->setState_TPY(T[0], p, Y);
+    gas->setMassFractions_NoNorm(Y);
+    gas->setState_TP(T[0], p);
+
 
     //set reactor and mechanisms
     auto odes = newReactor("Reactor", sol); 
