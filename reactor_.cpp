@@ -387,19 +387,23 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //get state and normalize
     reactor->getState(y.data());
     toxhat(y.data(), f, nx, rusr);
+    std::cout<<"after toxhat()"<<std::endl;
     myfnn(nx, x, fnn);
+    std::cout<<"after myfnn()"<<std::endl;
 
     //get reduced state
     for (int ii = 0; ii < nx; ii++)
     {
         f[ii] = f[ii] - x[ii] - fnn[ii];
     }
+    std::cout<<"after reduced stated"<<std::endl;
 
     //JACOBIAN START
     if (need[1] == 1)
     {
         Eigen::SparseMatrix<double> jac_spar = reactor->finiteDifferenceJacobian();
         Eigen::MatrixXd jac = Eigen::MatrixXd(jac_spar);
+        std::cout<<"after jacobian()"<<std::endl;
 
         for (size_t k = 0; k < n_species; k++)
         {
