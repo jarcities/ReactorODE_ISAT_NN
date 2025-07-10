@@ -11,7 +11,6 @@ icpx -O2 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eig
 #debugging
 # icpx -g -fsanitize=address -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
 
-
 #compile f90 linking cantera and cpp 
 # ifx -O3 -L../cantera/build/lib -I../cantera/include -o main.exe driver_samples.f90 reactor.o \
 #	-lstdc++ -lcantera -Bstatic -L../ISAT/lib -I../ISAT/isatab_ser -lisat7_ser -L -mkl -Bdynamic -mkl -lstdc++
