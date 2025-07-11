@@ -32,8 +32,8 @@ using namespace Cantera;
 namespace Gl
 {
 
-    shared_ptr<Solution> sol;    // = newSolution("h2o2.yaml", "ohmech", "none");
-    shared_ptr<ThermoPhase> gas; // = sol->thermo();
+    // shared_ptr<Solution> sol;    // = newSolution("h2o2.yaml", "ohmech", "none");
+    // shared_ptr<ThermoPhase> gas; // = sol->thermo();
 
     int nLayers = 5;
     int nNeurons = 10;
