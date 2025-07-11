@@ -366,7 +366,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     std::cout<<"after setState()"<<std::endl;
 
     //set reactor and mechanisms
-    auto odes = newReactor("IdealGasConstPressureReactor", sol); 
+    auto odes = newReactor("ConstPressureReactor", sol); 
     std::cout<<"after newReactor()"<<std::endl;
     auto reactor = std::static_pointer_cast<Reactor>(odes); 
     ReactorNet net;
