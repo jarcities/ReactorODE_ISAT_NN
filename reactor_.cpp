@@ -32,8 +32,8 @@ using namespace Cantera;
 namespace Gl
 {
 
-    // shared_ptr<Solution> sol;    // = newSolution("h2o2.yaml", "ohmech", "none");
-    // shared_ptr<ThermoPhase> gas; // = sol->thermo();
+    shared_ptr<Solution> sol;    // = newSolution("h2o2.yaml", "ohmech", "none");
+    shared_ptr<ThermoPhase> gas; // = sol->thermo();
 
     int nLayers = 5;
     int nNeurons = 10;
@@ -406,8 +406,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //JACOBIAN START
     if (need[1] == 1)
     {
-        Eigen::SparseMatrix<double> jac_spar = reactor->finiteDifferenceJacobian();
-        Eigen::MatrixXd jac = Eigen::MatrixXd(jac_spar);
+        Eigen::SparseMatrix<double> jac_sparse = reactor->finiteDifferenceJacobian();
+        Eigen::MatrixXd jac = Eigen::MatrixXd(jac_sparse);
         std::cout<<"after jacobian()"<<std::endl;
 
         // for (size_t k = 0; k < n_species; k++)
@@ -430,8 +430,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
 
-        // 3) Assemble full residual Jacobian: J = J_reac_{i+1,j} – I – jac_nn
-        //    (note the “+1” because J_reac rows start with temperature at row 0)
         for (int j = 0; j < nx; ++j) {
             for (int i = 0; i < nx; ++i) {
                 double jac_eig = jac(i + 1, j);
