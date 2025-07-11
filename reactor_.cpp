@@ -301,8 +301,9 @@ void myfnn(int &nx, double x[], double fnn[])
             x2[kk] = 0.0;
             for (int jj = 0; jj < n1[ll]; jj++)
             {
-                x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
+                // x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
                 // x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
+                x2[kk] += A[ ia[ll] + jj * n2[ll] + kk ] * x1[jj];
             }
             x2[kk] += b[ib[ll] + kk];
 
