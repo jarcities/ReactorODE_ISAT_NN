@@ -414,8 +414,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             for (int i = 0; i < nx; ++i)
             {
                 double jac_eig = jac(i + 1, j);
-                double identity = (i == j ? 1.0 : 0.0);
-                g[i + j * nx] = jac_eig - identity;
+                // double identity = (i == j ? 1.0 : 0.0);
+                g[i + j * nx] = jac_eig;
             }
         }
 
