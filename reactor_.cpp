@@ -427,11 +427,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             myfnn(nx, x_m.data(), fnn_m.data());
             for (int i = 0; i < nx; ++i) {
                 jac_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
-            }
-        }
-
-        for (int j = 0; j < nx; ++j) {
-            for (int i = 0; i < nx; ++i) {
                 double jac_eig = jac(i + 1, j);
                 double identity = (i == j ? 1.0 : 0.0);
                 g[i + j * nx] = jac_eig - identity - jac_nn(i, j);
