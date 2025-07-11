@@ -391,13 +391,14 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     reactor->getState(y.data());
     toxhat(y.data(), f, nx, rusr);
     std::cout<<"after toxhat()"<<std::endl;
-    myfnn(nx, x, fnn);
+    // myfnn(nx, x, fnn);
     std::cout<<"after myfnn()"<<std::endl;
 
     //get reduced state
     for (int ii = 0; ii < nx; ii++)
     {
-        f[ii] = f[ii] - x[ii] - fnn[ii];
+        // f[ii] = f[ii] - x[ii] - fnn[ii];
+        f[ii] = f[ii] - x[ii];
     }
     std::cout<<"after reduced stated"<<std::endl;
 
@@ -408,28 +409,33 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         Eigen::MatrixXd jac = Eigen::MatrixXd(jac_sparse);
         std::cout<<"after jacobian()"<<std::endl;
 
-        // for (size_t k = 0; k < n_species; k++)
-        // {
-        //     g[k] = jac(k+1, 0);
-        // }
-
-        Eigen::MatrixXd jac_nn(nx, nx);
-        const double eps = dx;  // reuse your finite-difference step
-        std::vector<double> fnn_base(nx), fnn_p(nx), fnn_m(nx);
-        myfnn(nx, x, fnn_base.data());
-        for (int j = 0; j < nx; ++j) {
-            std::vector<double> x_p(x, x + nx), x_m(x, x + nx);
-            x_p[j] += eps;
-            x_m[j] -= eps;
-            myfnn(nx, x_p.data(), fnn_p.data());
-            myfnn(nx, x_m.data(), fnn_m.data());
-            for (int i = 0; i < nx; ++i) {
-                jac_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
+        for (int j = 0; j < nx; ++j)
+        {
+            for (int i = 0; i < nx; ++i)
+            {
                 double jac_eig = jac(i + 1, j);
                 double identity = (i == j ? 1.0 : 0.0);
-                g[i + j * nx] = jac_eig - identity - jac_nn(i, j);
+                g[i + j * nx] = jac_eig - identity
             }
         }
+
+        // Eigen::MatrixXd jac_nn(nx, nx);
+        // const double eps = dx;  // reuse your finite-difference step
+        // std::vector<double> fnn_base(nx), fnn_p(nx), fnn_m(nx);
+        // myfnn(nx, x, fnn_base.data());
+        // for (int j = 0; j < nx; ++j) {
+        //     std::vector<double> x_p(x, x + nx), x_m(x, x + nx);
+        //     x_p[j] += eps;
+        //     x_m[j] -= eps;
+        //     myfnn(nx, x_p.data(), fnn_p.data());
+        //     myfnn(nx, x_m.data(), fnn_m.data());
+        //     for (int i = 0; i < nx; ++i) {
+        //         jac_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
+        //         double jac_eig = jac(i + 1, j);
+        //         double identity = (i == j ? 1.0 : 0.0);
+        //         g[i + j * nx] = jac_eig - identity - jac_nn(i, j);
+        //     }
+        // }
     }
     // {
 
