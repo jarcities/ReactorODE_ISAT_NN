@@ -302,8 +302,7 @@ void myfnn(int &nx, double x[], double fnn[])
             for (int jj = 0; jj < n1[ll]; jj++)
             {
                 // x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
-                // x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
-                x2[kk] += A[ ia[ll] + jj * n2[ll] + kk ] * x1[jj];
+                x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
             }
             x2[kk] += b[ib[ll] + kk];
 
@@ -367,7 +366,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     std::cout<<"after setState()"<<std::endl;
 
     //set reactor and mechanisms
-    auto odes = newReactor("Reactor", sol); 
+    auto odes = newReactor("IdealGasConstPressureReactor", sol); 
     std::cout<<"after newReactor()"<<std::endl;
     auto reactor = std::static_pointer_cast<Reactor>(odes); 
     ReactorNet net;
