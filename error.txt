@@ -1,9 +1,108 @@
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ git pull
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (1/1), done.
+remote: Total 3 (delta 2), reused 3 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (3/3), 255 bytes | 31.00 KiB/s, done.
+From https://github.com/kingjarred/ReactorODE_ISAT_NN
+   35cb8e4..2cf0324  main       -> origin/main
+Updating 35cb8e4..2cf0324
+Fast-forward
+ reactor_.cpp | 5 -----
+ 1 file changed, 5 deletions(-)
+(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./build.sh 
+./build.sh: line 1: ﻿#!/bin/bash: No such file or directory
+icpx: warning: -lcantera: 'linker' input unused [-Wunused-command-line-argument]
+icpx: warning: argument unused during compilation: '-L/home/jsampayan4914/miniconda3/envs/intel_cantera/lib' [-Wunused-command-line-argument]
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./main.exe 
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+after toxhat()
+after myfnn()
+after reduced stated
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+after toxhat()
+after myfnn()
+after reduced stated
+after jacobian()
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+after toxhat()
+after myfnn()
+after reduced stated
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+after toxhat()
+after myfnn()
+after reduced stated
+after jacobian()
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+after toxhat()
+after myfnn()
+after reduced stated
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+after toxhat()
+after myfnn()
+after reduced stated
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+after toxhat()
+after myfnn()
+after reduced stated
+after setState()
+after newReactor()
+after addReactor()
+after intialize()
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:2998][CVode] The right-hand side routine failed at the first call.
 terminate called after throwing an instance of 'Cantera::CanteraError'
   what():  
 *******************************************************************************
-CanteraError thrown by Phase::setDensity:
-density must be positive. density = nan
+CanteraError thrown by CVodesIntegrator::integrate:
+CVodes error encountered. Error code: -9
+CVode: The right-hand side routine failed at the first call.
+
+Exceptions caught during RHS evaluation:
+
+*******************************************************************************
+CanteraError thrown by checkFinite:
+ydot contains non-finite elements:
+
+ydot[5] = -nan
+ydot[6] = -nan
+ydot[7] = -nan
+ydot[8] = -nan
+ydot[9] = -nan
+ydot[10] = -nan
+*******************************************************************************
+
+Components with largest weighted error estimates:
+5: 1
+6: 1
+7: 1
+9: 1
+10: 1
+11: 1
+12: 1
+8: 0.44710857263067466
+3: 0.14521831582469316
+4: 1.0000061228144081e-06
 *******************************************************************************
 
 forrtl: error (76): Abort trap signal
@@ -15,14 +114,15 @@ libc.so.6          000015554CE287F3  abort                 Unknown  Unknown
 libstdc++.so.6.0.  00001555553EBFAE  _ZN9__gnu_cxx27__     Unknown  Unknown
 libstdc++.so.6.0.  00001555553EA4F2  Unknown               Unknown  Unknown
 libstdc++.so.6.0.  00001555553E42F3  _ZSt10unexpectedv     Unknown  Unknown
-libstdc++.so.6.0.  00001555553EA75E  __cxa_current_exc     Unknown  Unknown
-libcantera.so.3.1  0000155554DDACA7  Unknown               Unknown  Unknown
-main.exe           000000000040FB91  Unknown               Unknown  Unknown
-main.exe           0000000000412FB8  Unknown               Unknown  Unknown
-main.exe           0000000000409940  Unknown               Unknown  Unknown
-main.exe           000000000040664D  Unknown               Unknown  Unknown
+libstdc++.so.6.0.  00001555553EA712  __cxa_rethrow         Unknown  Unknown
+libcantera.so.3.1  0000155554DECE52  Unknown               Unknown  Unknown
+libcantera.so.3.1  00001555551F0927  _ZN7Cantera10Reac     Unknown  Unknown
+main.exe           000000000040FC85  Unknown               Unknown  Unknown
+main.exe           0000000000412AE8  Unknown               Unknown  Unknown
+main.exe           0000000000409930  Unknown               Unknown  Unknown
+main.exe           000000000040663D  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29590  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29640  __libc_start_main     Unknown  Unknown
-main.exe           0000000000406565  Unknown               Unknown  Unknown
+main.exe           0000000000406555  Unknown               Unknown  Unknown
 Aborted (core dumped)
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ 
