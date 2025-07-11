@@ -360,12 +360,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     //which Reactor ODE class?
-    auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none");
-    std::cout<<"after newSolution()"<<std::endl;
-
-    //set state
-    auto gas = sol->thermo();
-    std::cout<<"after thermo()"<<std::endl;
+    // auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none"); //already set in initfgh()
+    // std::cout<<"after newSolution()"<<std::endl;
+    // auto gas = sol->thermo(); //already set in initfgh()
+    // std::cout<<"after thermo()"<<std::endl;
     gas->setState_TPY(T[0], p, Y);
     std::cout<<"after setState()"<<std::endl;
 
