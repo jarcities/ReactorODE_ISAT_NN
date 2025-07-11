@@ -353,34 +353,18 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     fromxhat(x, ptcl, nx, rusr);
 
     //transfer arrays
-    // T[0] = ptcl[0];
-    // for (int ii = 1; ii < nx; ii++)
-    // {
-    //     Y[ii - 1] = ptcl[ii];
-    // }
-    size_t nsp = gas->nSpecies();
-    std::vector<double> Y(nsp, 0.0);
-    for (size_t k = 0; k < std::min(nsp, size_t(nx-1)); ++k) 
+    T[0] = ptcl[0];
+    for (int ii = 1; ii < nx; ii++)
     {
-        Y[k] = ptcl[k+1];
+        Y[ii - 1] = ptcl[ii];
     }
-    double sumY = std::accumulate(Y.begin(), Y.end(), 0.0);
-    if (sumY <= 0.0 || std::isnan(sumY)) 
-    {
-        throw std::runtime_error("Invalid mass fractions: sum = " + std::to_string(sumY));
-    }
-    for (auto& yk : Y) 
-    {
-        yk /= sumY;
-    }
-
 
     //which Reactor ODE class?
     // auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none"); //already set in initfgh()
     // std::cout<<"after newSolution()"<<std::endl;
     // auto gas = sol->thermo(); //already set in initfgh()
     // std::cout<<"after thermo()"<<std::endl;
-    gas->setState_TPY(T[0], p, Y.data());
+    gas->setState_TPY(T[0], p, Y);
     std::cout<<"after setState()"<<std::endl;
 
     //set reactor and mechanisms
