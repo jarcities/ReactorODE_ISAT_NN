@@ -364,7 +364,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // std::cout<<"after newSolution()"<<std::endl;
     // auto gas = sol->thermo(); //already set in initfgh()
     // std::cout<<"after thermo()"<<std::endl;
-    gas->setState_TPY(T[0], p, Y);
+    gas->setState_TPY(T[0], p, Y.data());
     std::cout<<"after setState()"<<std::endl;
 
     //set reactor and mechanisms
