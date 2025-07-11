@@ -320,7 +320,8 @@ void myfnn(int &nx, double x[], double fnn[])
 
     for (int kk = 0; kk < nx; kk++)
     {
-        fnn[kk] = x2[kk];
+        // fnn[kk] = x2[kk];
+        fnn[kk] = 0.0;
     }
 }
 
