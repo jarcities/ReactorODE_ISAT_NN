@@ -324,8 +324,6 @@ void myfnn(int &nx, double x[], double fnn[])
     }
 }
 
-// The actual code is put into a function that
-// can be called from the main program.
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
