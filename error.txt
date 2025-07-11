@@ -1,10 +1,3 @@
-(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ls
-A1.csv  A3.csv  A5.csv  B2.csv  B4.csv  bin       clean.sh            error.txt         literature   reactor_.cpp  README_TODO.txt
-A2.csv  A4.csv  B1.csv  B3.csv  B5.csv  build.sh  driver_samples.f90  jacobian_example  reactor.cpp  reactor.hpp
-(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./build.sh 
-./build.sh: line 1: ﻿#!/bin/bash: No such file or directory
-icpx: warning: -lcantera: 'linker' input unused [-Wunused-command-line-argument]
-icpx: warning: argument unused during compilation: '-L/home/jsampayan4914/miniconda3/envs/intel_cantera/lib' [-Wunused-command-line-argument]
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./main.exe 
 after setState()
 after newReactor()
@@ -57,44 +50,11 @@ after intialize()
 after toxhat()
 after myfnn()
 after reduced stated
-after setState()
-after newReactor()
-after addReactor()
-after intialize()
-[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:2998][CVode] The right-hand side routine failed at the first call.
 terminate called after throwing an instance of 'Cantera::CanteraError'
   what():  
 *******************************************************************************
-CanteraError thrown by CVodesIntegrator::integrate:
-CVodes error encountered. Error code: -9
-CVode: The right-hand side routine failed at the first call.
-
-Exceptions caught during RHS evaluation:
-
-*******************************************************************************
-CanteraError thrown by checkFinite:
-ydot contains non-finite elements:
-
-ydot[1] = -nan
-ydot[4] = -nan
-ydot[5] = -nan
-ydot[6] = -nan
-ydot[7] = -nan
-ydot[8] = -nan
-ydot[9] = -nan
-*******************************************************************************
-
-Components with largest weighted error estimates:
-2: 1000199079.6328133
-3: 0.023172554440205807
-0: 0
-1: 0
-4: 0
-5: 0
-6: 0
-7: 0
-8: 0
-9: 0
+CanteraError thrown by Phase::setTemperature:
+temperature must be positive. T = -219.9103561958625
 *******************************************************************************
 
 forrtl: error (76): Abort trap signal
@@ -106,12 +66,10 @@ libc.so.6          000015554CE287F3  abort                 Unknown  Unknown
 libstdc++.so.6.0.  00001555553EBFAE  _ZN9__gnu_cxx27__     Unknown  Unknown
 libstdc++.so.6.0.  00001555553EA4F2  Unknown               Unknown  Unknown
 libstdc++.so.6.0.  00001555553E42F3  _ZSt10unexpectedv     Unknown  Unknown
-libstdc++.so.6.0.  00001555553EA712  __cxa_rethrow         Unknown  Unknown
-libcantera.so.3.1  0000155554DECE52  Unknown               Unknown  Unknown
-libcantera.so.3.1  00001555551F0927  _ZN7Cantera10Reac     Unknown  Unknown
-main.exe           000000000040FCCD  Unknown               Unknown  Unknown
-main.exe           0000000000412B38  Unknown               Unknown  Unknown
-main.exe           0000000000409940  Unknown               Unknown  Unknown
+libstdc++.so.6.0.  00001555553EA75E  __cxa_current_exc     Unknown  Unknown
+libcantera.so.3.1  0000155554DDACA7  Unknown               Unknown  Unknown
+main.exe           00000000004106D6  Unknown               Unknown  Unknown
+main.exe           000000000040D9C0  Unknown               Unknown  Unknown
 main.exe           000000000040664D  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29590  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29640  __libc_start_main     Unknown  Unknown
