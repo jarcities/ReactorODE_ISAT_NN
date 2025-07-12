@@ -230,12 +230,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     catch (const std::exception& e)
     {
         std::cerr << "[myfgh] ERROR in fromxhat(): " << e.what() << "\n";
-        std::cerr << "  x = [";
+        std::cerr << "x = [";
         for (int i = 0; i < nx; i++) {
             std::cerr << x[i] << (i+1<nx ? ", " : "");
         }
         std::cerr << "]\n";
-        std::cerr << "  rusr = [";
+        std::cerr << "rusr = [";
         for (int i = 0; i < 2*nx+5; i++) {
             std::cerr << rusr[i] << (i+1<2*nx+5 ? ", " : "");
         }
@@ -259,8 +259,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     {
         double sumY = std::accumulate(Y, Y + (nx-1), 0.0);
         std::cerr << "[myfgh] ERROR in setState_TPY(): " << err.what() << "\n";
-        std::cerr << "  T = " << T[0] << ", p = " << p << "\n";
-        std::cerr << "  Y = [";
+        std::cerr << "T = " << T[0] << ", p = " << p << "\n";
+        std::cerr << "Y = [";
         for (int i = 0; i < nx-1; i++) {
             std::cerr << Y[i] << (i+1<nx-1 ? ", " : "");
         }
@@ -281,7 +281,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     {
         std::cerr << "[myfgh] ERROR creating ConstPressureReactor: " 
                   << err.what() << "\n";
-        std::cerr << "  sol ptr = " << sol.get() << "\n";
+        std::cerr << "sol ptr = " << sol.get() << "\n";
         throw;
     }
 
@@ -294,7 +294,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     catch (const Cantera::CanteraError& err)
     {
         std::cerr << "[myfgh] ERROR in net.initialize(): " << err.what() << "\n";
-        std::cerr << "  initial time = 0.0\n";
+        std::cerr << "initial time = 0.0\n";
         throw;
     }
 
@@ -306,10 +306,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     catch (const Cantera::CanteraError& err) 
     {
         std::cerr << "!!! CVODE failed at dt="<<dt<<": "<<err.what()<<"\n";
-        std::cerr << "    last x    = [";
+        std::cerr << "last x    = [";
         for (int i = 0; i < nx; i++) std::cerr << x[i] << (i+1<nx?", ":"");
         std::cerr << "]\n";
-        std::cerr << "    last ptcl = [";
+        std::cerr << "last ptcl = [";
         for (int i = 0; i < nx; i++) std::cerr << ptcl[i] << (i+1<nx?", ":"");
         std::cerr << "]\n";
         throw;
@@ -328,7 +328,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     catch (const Cantera::CanteraError& err) 
     {
         std::cerr << "[myfgh] ERROR in getState(): " << err.what() << "\n";
-        std::cerr << "  neq = " << reactor->neq() << "\n";
+        std::cerr << "neq = " << reactor->neq() << "\n";
         throw;
     }
     
@@ -341,13 +341,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     catch (const std::exception& e)
     {
         std::cerr << "[myfgh] ERROR in toxhat()/myfnn(): " << e.what() << "\n";
-        std::cerr << "  y  = [";
+        std::cerr << "y  = [";
         for (int i = 0; i < nx; i++) std::cerr << y[i] << (i+1<nx?", ":"");
         std::cerr << "]\n";
-        std::cerr << "  f  = [";
+        std::cerr << "f  = [";
         for (int i = 0; i < nx; i++) std::cerr << f[i] << (i+1<nx?", ":"");
         std::cerr << "]\n";
-        std::cerr << "  fnn= [";
+        std::cerr << "fnn= [";
         for (int i = 0; i < nx; i++) std::cerr << fnn[i] << (i+1<nx?", ":"");
         std::cerr << "]\n";
         throw;
