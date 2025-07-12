@@ -1,4 +1,3 @@
-(intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./main.exe 
 [ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:2998][CVode] The right-hand side routine failed at the first call.
 !!! CVODE failed at dt=5e-07: 
 *******************************************************************************
@@ -33,8 +32,8 @@ Components with largest weighted error estimates:
 9: 0
 *******************************************************************************
 
-    last x    = [-2.92424, 2.08666, 0, 0, 5.09542e-17, 0.90056, 0, 0, 0, 0, 0]
-    last ptcl = [0.333872, 271213, 0, 0, 1.27055e-21, 0.210084, 0, 0, 0, 0, 0]
+last x    = [-2.92424, 2.08666, 0, 0, 5.09542e-17, 0.90056, 0, 0, 0, 0, 0]
+last ptcl = [0.333872, 271213, 0, 0, 1.27055e-21, 0.210084, 0, 0, 0, 0, 0]
 terminate called after throwing an instance of 'Cantera::CanteraError'
   what():  
 *******************************************************************************
@@ -86,4 +85,3 @@ main.exe           000000000040668D  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29590  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29640  __libc_start_main     Unknown  Unknown
 main.exe           00000000004065A5  Unknown               Unknown  Unknown
-Aborted (core dumped)
