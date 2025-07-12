@@ -328,7 +328,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     catch (const Cantera::CanteraError& err) 
     {
         std::cerr << "[myfgh] ERROR in getState(): " << err.what() << "\n";
-        std::cerr << "  neq = " << reactorPtr->neq() << "\n";
+        std::cerr << "  neq = " << reactor->neq() << "\n";
         throw;
     }
     
