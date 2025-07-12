@@ -1,76 +1,40 @@
 (intel_cantera) [jsampayan4914@cpu038 reactorode_isat_nn]$ ./main.exe 
->>> myfgh called; need[1]=0, x = [0, 0, 0, 0, 0.880654, 0, 0, 0, 0, 0, 0.979928]
-  T = 1050; Y = [0, 0, 0, 0.210084, 0, 0, 0, 0, 0, 0.789916], sum(Y)=1
-  gas state: T=1050, rho=0.333872, cp=1161.35
-after newReactor()
-after addReactor()
-after intialize()
-after toxhat()
-after myfnn()
-after reduced stated
->>> myfgh called; need[1]=1, x = [0, 0, 0, 0, 0.880654, 0, 0, 0, 0, 0, 0.979928]
-  T = 1050; Y = [0, 0, 0, 0.210084, 0, 0, 0, 0, 0, 0.789916], sum(Y)=1
-  gas state: T=1050, rho=0.333872, cp=1161.35
-after newReactor()
-after addReactor()
-after intialize()
-after toxhat()
-after myfnn()
-after reduced stated
-after jacobian()
->>> myfgh called; need[1]=0, x = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  T = 1050; Y = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], sum(Y)=1
-  gas state: T=1050, rho=0.0233983, cp=15063.9
-after newReactor()
-after addReactor()
-after intialize()
-after toxhat()
-after myfnn()
-after reduced stated
->>> myfgh called; need[1]=1, x = [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-  T = 1050; Y = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], sum(Y)=1
-  gas state: T=1050, rho=0.0233983, cp=15063.9
-after newReactor()
-after addReactor()
-after intialize()
-after toxhat()
-after myfnn()
-after reduced stated
-after jacobian()
->>> myfgh called; need[1]=0, x = [0, 0, 0, 0, 0.880654, 0, 0, 0, 0, 0, 0.979928]
-  T = 1050; Y = [0, 0, 0, 0.210084, 0, 0, 0, 0, 0, 0.789916], sum(Y)=1
-  gas state: T=1050, rho=0.333872, cp=1161.35
-after newReactor()
-after addReactor()
-after intialize()
-after toxhat()
-after myfnn()
-after reduced stated
->>> myfgh called; need[1]=0, x = [0, 0, 0, 0, 0.880654, 0, 0, 0, 0, 0, 0.979928]
-  T = 1050; Y = [0, 0, 0, 0.210084, 0, 0, 0, 0, 0, 0.789916], sum(Y)=1
-  gas state: T=1050, rho=0.333872, cp=1161.35
-after newReactor()
-after addReactor()
-after intialize()
-after toxhat()
-after myfnn()
-after reduced stated
->>> myfgh called; need[1]=0, x = [0, 0, 0, 0, 0.880654, 0, 0, 0, 0, 0, 0.979928]
-  T = 1050; Y = [0, 0, 0, 0.210084, 0, 0, 0, 0, 0, 0.789916], sum(Y)=1
-  gas state: T=1050, rho=0.333872, cp=1161.35
-after newReactor()
-after addReactor()
-after intialize()
-after toxhat()
-after myfnn()
-after reduced stated
->>> myfgh called; need[1]=0, x = [-2.92424, 2.08666, 0, 0, 5.09542e-17, 0.90056, 0, 0, 0, 0, 0]
-  T = 0.333872; Y = [271213, 0, 0, 1.27055e-21, 0.210084, 0, 0, 0, 0, 0], sum(Y)=271213
-  gas state: T=0.333872, rho=73.5858, cp=9679.55
-after newReactor()
-after addReactor()
-after intialize()
 [ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:2998][CVode] The right-hand side routine failed at the first call.
+!!! CVODE failed at dt=5e-07: 
+*******************************************************************************
+CanteraError thrown by CVodesIntegrator::integrate:
+CVodes error encountered. Error code: -9
+CVode: The right-hand side routine failed at the first call.
+
+Exceptions caught during RHS evaluation:
+
+*******************************************************************************
+CanteraError thrown by checkFinite:
+ydot contains non-finite elements:
+
+ydot[4] = -nan
+ydot[5] = -nan
+ydot[6] = -nan
+ydot[7] = -nan
+ydot[8] = -nan
+ydot[9] = -nan
+*******************************************************************************
+
+Components with largest weighted error estimates:
+0: 0
+1: 0
+2: 0
+3: 0
+4: 0
+5: 0
+6: 0
+7: 0
+8: 0
+9: 0
+*******************************************************************************
+
+    last x    = [-2.92424, 2.08666, 0, 0, 5.09542e-17, 0.90056, 0, 0, 0, 0, 0]
+    last ptcl = [0.333872, 271213, 0, 0, 1.27055e-21, 0.210084, 0, 0, 0, 0, 0]
 terminate called after throwing an instance of 'Cantera::CanteraError'
   what():  
 *******************************************************************************
@@ -93,16 +57,16 @@ ydot[9] = -nan
 *******************************************************************************
 
 Components with largest weighted error estimates:
-3: 1
-4: 1
-5: 1
-7: 1
-8: 1
-9: 1
-10: 1
-11: 1
-6: 0.563504737208924
-2: 9.999997746080248e-07
+0: 0
+1: 0
+2: 0
+3: 0
+4: 0
+5: 0
+6: 0
+7: 0
+8: 0
+9: 0
 *******************************************************************************
 
 forrtl: error (76): Abort trap signal
@@ -114,14 +78,12 @@ libc.so.6          000015554CE287F3  abort                 Unknown  Unknown
 libstdc++.so.6.0.  00001555553EBFAE  _ZN9__gnu_cxx27__     Unknown  Unknown
 libstdc++.so.6.0.  00001555553EA4F2  Unknown               Unknown  Unknown
 libstdc++.so.6.0.  00001555553E42F3  _ZSt10unexpectedv     Unknown  Unknown
-libstdc++.so.6.0.  00001555553EA712  __cxa_rethrow         Unknown  Unknown
-libcantera.so.3.1  0000155554DECE52  Unknown               Unknown  Unknown
-libcantera.so.3.1  00001555551F0927  _ZN7Cantera10Reac     Unknown  Unknown
-main.exe           000000000040FF69  Unknown               Unknown  Unknown
-main.exe           0000000000412D98  Unknown               Unknown  Unknown
-main.exe           0000000000409960  Unknown               Unknown  Unknown
-main.exe           000000000040666D  Unknown               Unknown  Unknown
+libstdc++.so.6.0.  00001555553EA75E  __cxa_current_exc     Unknown  Unknown
+main.exe           0000000000410CB4  Unknown               Unknown  Unknown
+main.exe           0000000000412FF8  Unknown               Unknown  Unknown
+main.exe           0000000000409980  Unknown               Unknown  Unknown
+main.exe           000000000040668D  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29590  Unknown               Unknown  Unknown
 libc.so.6          000015554CE29640  __libc_start_main     Unknown  Unknown
-main.exe           0000000000406585  Unknown               Unknown  Unknown
+main.exe           00000000004065A5  Unknown               Unknown  Unknown
 Aborted (core dumped)
