@@ -35,7 +35,6 @@ using namespace Cantera;
 namespace Gl
 {
 
-    cantera::setLogLevel(5);
     shared_ptr<Solution> sol;    // = newSolution("h2o2.yaml", "ohmech", "none");
     shared_ptr<ThermoPhase> gas; // = sol->thermo();
 
