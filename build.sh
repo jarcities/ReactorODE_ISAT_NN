@@ -19,4 +19,4 @@ ifx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -o main.exe driver_samples.f
 	-Bdynamic -qmkl -Wl,-rpath,$CONDA_PREFIX/lib
 
 #run program
-# ./main.exe
+./main.exe 2> error.txt
