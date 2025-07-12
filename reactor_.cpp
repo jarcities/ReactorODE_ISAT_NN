@@ -115,134 +115,6 @@ namespace Gl
 
 using namespace Gl;
 
-// class ReactorODEs : public FuncEval
-// {
-// public:
-//     /**
-//      * Constructor
-//      * @param[in] sol Solution object specifying initial system state.
-//      */
-//     ReactorODEs(shared_ptr<Solution> sol)
-//     {
-//         /* ---------------------- INITIALIZE MEMBER VARS ---------------------- */
-
-//         // pointer to the system's ThermoPhase object. updated by the solver during
-//         // simulation to provide iteration-specific thermodynamic properties.
-//         m_gas = sol->thermo();
-
-//         // pointer to the kinetics manager. provides iteration-specific species
-//         // production rates based on the current state of the ThermoPhase.
-//         m_kinetics = sol->kinetics();
-
-//         // the system's constant pressure, taken from the provided initial state.
-//         m_pressure = m_gas->pressure();
-
-//         // number of chemical species in the system.
-//         m_nSpecies = m_gas->nSpecies();
-
-//         // resize the vector<double> storage containers for species partial molar enthalpies
-//         // and net production rates. internal values are updated and used by the solver
-//         // per iteration.
-//         m_hbar.resize(m_nSpecies);
-//         m_wdot.resize(m_nSpecies);
-
-//         // number of equations in the ODE system. a conservation equation for each
-//         // species, plus a single energy conservation equation for the system.
-//         m_nEqs = m_nSpecies + 1;
-//     }
-
-//     /**
-//      * Evaluate the ODE right-hand-side function, ydot = f(t,y).
-//      *   - overridden from FuncEval, called by the integrator during simulation.
-//      * @param[in] t time.
-//      * @param[in] y solution vector, length neq()
-//      * @param[out] ydot rate of change of solution vector, length neq()
-//      * @param[in] p sensitivity parameter vector, length nparams()
-//      *   - note: sensitivity analysis isn't implemented in this example
-//      */
-//     void eval(double t, double *y, double *ydot, double *p) override
-//     {
-//         // the solution vector *y* is [T, Y_1, Y_2, ... Y_K], where T is the
-//         // system temperature, and Y_k is the mass fraction of species k.
-//         // similarly, the time derivative of the solution vector, *ydot*, is
-//         // [dT/dt, Y_1/dt, Y_2/dt, ... Y_K/dt].
-//         // the following variables are defined for clear and convenient access
-//         // to these vectors:
-//         double temperature = y[0];
-//         double *massFracs = &y[1];
-//         double *dTdt = &ydot[0];
-//         double *dYdt = &ydot[1];
-
-//         /* ------------------------- UPDATE GAS STATE ------------------------- */
-//         // the state of the ThermoPhase is updated to reflect the current solution
-//         // vector, which was calculated by the integrator.
-//         m_gas->setMassFractions_NoNorm(massFracs);
-//         m_gas->setState_TP(temperature, m_pressure);
-
-//         /* ----------------------- GET REQ'D PROPERTIES ----------------------- */
-//         double rho = m_gas->density();
-//         double cp = m_gas->cp_mass();
-//         m_gas->getPartialMolarEnthalpies(&m_hbar[0]);
-//         m_kinetics->getNetProductionRates(&m_wdot[0]);
-
-//         /* -------------------------- ENERGY EQUATION ------------------------- */
-//         // the rate of change of the system temperature is found using the energy
-//         // equation for a closed-system constant pressure ideal gas:
-//         //     m*cp*dT/dt = - sum[h(k) * dm(k)/dt]
-//         // or equivalently:
-//         //     dT/dt = - sum[hbar(k) * dw(k)/dt] / (rho * cp)
-//         double hdot_vol = 0;
-//         for (size_t k = 0; k < m_nSpecies; k++)
-//         {
-//             hdot_vol += m_hbar[k] * m_wdot[k];
-//         }
-//         *dTdt = -hdot_vol / (rho * cp);
-
-//         /* --------------------- SPECIES CONSERVATION EQS --------------------- */
-//         // the rate of change of each species' mass fraction is found using the closed-system
-//         // species conservation equation, applied once for each species:
-//         //     m*dY(k)/dt = dm(k)/dt
-//         // or equivalently:
-//         //     dY(k)/dt = dw(k)/dt * MW(k) / rho
-//         for (size_t k = 0; k < m_nSpecies; k++)
-//         {
-//             dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
-//         }
-//     }
-
-//     /**
-//      * Number of equations in the ODE system.
-//      *   - overridden from FuncEval, called by the integrator during initialization.
-//      */
-//     size_t neq() const override
-//     {
-//         return m_nEqs;
-//     }
-
-//     /**
-//      * Provide the current values of the state vector, *y*.
-//      *   - overridden from FuncEval, called by the integrator during initialization.
-//      * @param[out] y solution vector, length neq()
-//      */
-//     void getState(double *y) override
-//     {
-//         // the solution vector *y* is [T, Y_1, Y_2, ... Y_K], where T is the
-//         // system temperature, and Y_k is the mass fraction of species k.
-//         y[0] = m_gas->temperature();
-//         m_gas->getMassFractions(&y[1]);
-//     }
-
-// private:
-//     // private member variables, to be used internally.
-//     shared_ptr<ThermoPhase> m_gas;
-//     shared_ptr<Kinetics> m_kinetics;
-//     vector<double> m_hbar;
-//     vector<double> m_wdot;
-//     double m_pressure;
-//     size_t m_nSpecies;
-//     size_t m_nEqs;
-// };
-
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
 {
 
@@ -305,8 +177,7 @@ void myfnn(int &nx, double x[], double fnn[])
             for (int jj = 0; jj < n1[ll]; jj++)
             {
                 // x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
-                // x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
-                x2[kk] += A[ ia[ll] + kk*n1[ll] + jj ] * x1[jj];
+                x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
             }
             x2[kk] += b[ib[ll] + kk];
 
@@ -332,22 +203,19 @@ void myfnn(int &nx, double x[], double fnn[])
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
-
-    // std::cout<<"entered myfgh()"<<std::endl;
-    // double Y[nx - 1]; //gas
+    double Y[nx - 1]; //gas
+    // std::vector<double> Y (nx-1);
     double T[1]; //temp
-    // double ptcl[nx]; 
+    double ptcl[nx]; 
+    // std::vector<double> ptcl(nx);
     double *solution;
     double aTol = 1e-8; //rusr[2*nx];
     double rTol = 1e-8; //rusr[2*nx+1];
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4]; //pressure
-    // double fnn[nx];
-
-    std::vector<double> ptcl(nx);
-    std::vector<double> Y (nx-1);
-    std::vector<double> fnn(nx);
+    double fnn[nx];
+    // std::vector<double> fnn(nx);
 
 
     static int aaaa;
@@ -368,17 +236,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     //which Reactor ODE class?
-    // auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none"); //already set in initfgh()
-    // std::cout<<"after newSolution()"<<std::endl;
-    // auto gas = sol->thermo(); //already set in initfgh()
-    // std::cout<<"after thermo()"<<std::endl;
     gas->setState_TPY(T[0], p, Y);
     std::cout<<"after setState()"<<std::endl;
 
     //set reactor and mechanisms
-    auto reactor = newReactor("ConstPressureReactor", sol); 
+    auto odes = newReactor("ConstPressureReactor", sol); 
     std::cout<<"after newReactor()"<<std::endl;
-    // auto reactor = std::static_pointer_cast<Reactor>(odes); 
+    auto reactor = std::static_pointer_cast<Reactor>(odes); 
     ReactorNet net;
     net.addReactor(*reactor);
     std::cout<<"after addReactor()"<<std::endl;
@@ -419,19 +283,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         Eigen::MatrixXd jac = Eigen::MatrixXd(jac_sparse);
         std::cout<<"after jacobian()"<<std::endl;
 
-        // for (int j = 0; j < nx; ++j)
-        // {
-        //     for (int i = 0; i < nx; ++i)
-        //     {
-        //         g[i + j*nx] = jac(i, j) - (i == j ? 1.0 : 0.0);
-        //     }
-        // }
-
         Eigen::MatrixXd jac_nn(nx, nx);
-        const double eps = dx;  // reuse your finite-difference step
+        const double eps = dx;  
         std::vector<double> fnn_base(nx), fnn_p(nx), fnn_m(nx);
         myfnn(nx, x, fnn_base.data());
-        for (int j = 0; j < nx; ++j) {
+
+        for (int j = 0; j < nx; ++j) 
+        {
             std::vector<double> x_p(x, x + nx), x_m(x, x + nx);
             x_p[j] += eps;
             x_m[j] -= eps;
@@ -445,67 +303,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
     }
-    // {
-
-    //     double xp[nx];
-    //     double xm[nx];
-    //     double fp[nf];
-    //     double fm[nf];
-
-    //     for (int ii = 0; ii < nx; ii++)
-    //     {
-
-    //         for (int jj = 0; jj < nx; jj++)
-    //         {
-    //             xp[jj] = x[jj];
-    //             xm[jj] = x[jj];
-    //         }
-
-    //         xp[ii] += dx;
-    //         xm[ii] -= dx;
-
-    //         tnow = 0.0;
-    //         fromxhat(xp, ptcl, nx, rusr);
-    //         T[0] = ptcl[0];
-    //         for (int ii = 1; ii < nx; ii++)
-    //         {
-    //             Y[ii - 1] = ptcl[ii];
-    //         }
-    //         gas->setState_TPY(T[0], p, Y);
-    //         integrator->initialize(tnow, odes);
-    //         integrator->integrate(dt);
-    //         solution = integrator->solution();
-    //         toxhat(solution, fp, nx, rusr);
-    //         myfnn(nx, xp, fnn);
-    //         for (int ii = 0; ii < nx; ii++)
-    //         {
-    //             fp[ii] = fp[ii] - xp[ii] - fnn[ii];
-    //         }
-
-    //         tnow = 0.0;
-    //         fromxhat(xm, ptcl, nx, rusr);
-    //         T[0] = ptcl[0];
-    //         for (int ii = 1; ii < nx; ii++)
-    //         {
-    //             Y[ii - 1] = ptcl[ii];
-    //         }
-    //         gas->setState_TPY(T[0], p, Y);
-    //         integrator->initialize(tnow, odes);
-    //         integrator->integrate(dt);
-    //         solution = integrator->solution();
-    //         toxhat(solution, fm, nx, rusr);
-    //         myfnn(nx, xm, fnn);
-    //         for (int ii = 0; ii < nx; ii++)
-    //         {
-    //             fm[ii] = fm[ii] - xm[ii] - fnn[ii];
-    //         }
-
-    //         for (int jj = 0; jj < nx; jj++)
-    //         {
-    //             g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
-    //         }
-    //     }
-    // }
     //JACOBIAN END
 }
 
