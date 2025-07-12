@@ -269,11 +269,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     //set reactor ODEs
+    std::shared_ptr<Reactor> reactor;
     ReactorNet net;
     try
     {
         auto odes = newReactor("ConstPressureReactor", sol); 
-        auto reactor = std::static_pointer_cast<Reactor>(odes); 
+        reactor = std::static_pointer_cast<Reactor>(odes); 
         net.addReactor(*reactor);
     }
     catch (const Cantera::CanteraError& err) 
