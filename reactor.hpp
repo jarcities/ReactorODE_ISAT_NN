@@ -5,8 +5,8 @@
 extern "C"
 {
 
-    cantera::setLogLevel(5);
-    
+    // cantera::setLogLevel(5);
+
     void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[], double rusr[], double f[], double g[], double h[]);
 
     void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[]);
