@@ -203,18 +203,9 @@ void myfnn(int &nx, double x[], double fnn[])
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
-
-    std::cerr << ">>> myfgh called; need[1]="<< need[1] <<", x = [";
-    for (int i = 0; i < nx; i++) {
-        std::cerr << x[i] << (i+1<nx? ", " : "");
-    }
-    std::cerr << "]\n";
-
     double Y[nx - 1]; //gas
-    // std::vector<double> Y (nx-1);
     double T[1]; //temp
     double ptcl[nx]; 
-    // std::vector<double> ptcl(nx);
     double *solution;
     double aTol = 1e-8; //rusr[2*nx];
     double rTol = 1e-8; //rusr[2*nx+1];
@@ -222,8 +213,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4]; //pressure
     double fnn[nx];
-    // std::vector<double> fnn(nx);
-
 
     static int aaaa;
     if (aaaa != 7777)
@@ -233,11 +222,24 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     //un-normalize
-    fromxhat(x, ptcl, nx, rusr);
-    for (int i = 0; i < nx; i++) {
-        if (!std::isfinite(ptcl[i])) {
-            std::cerr << "!!! ptcl["<<i<<"] = "<< ptcl[i] << "\n";
+    try
+    {
+        fromxhat(x, ptcl, nx, rusr);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "[myfgh] ERROR in fromxhat(): " << e.what() << "\n";
+        std::cerr << "  x = [";
+        for (int i = 0; i < nx; i++) {
+            std::cerr << x[i] << (i+1<nx ? ", " : "");
         }
+        std::cerr << "]\n";
+        std::cerr << "  rusr = [";
+        for (int i = 0; i < 2*nx+5; i++) {
+            std::cerr << rusr[i] << (i+1<2*nx+5 ? ", " : "");
+        }
+        std::cerr << "]\n";
+        throw;  
     }
 
     //transfer arrays
@@ -247,62 +249,119 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         Y[ii - 1] = ptcl[ii];
     }
 
-    //which Reactor ODE class?
-    double sumY = 0.0;
-    std::cerr << "  T = " << T[0] << "; Y = [";
-    for (int i = 0; i < nx-1; i++) {
-        std::cerr << Y[i] << (i+1<nx-1? ", " : "");
-        sumY += Y[i];
+    //set state
+    try
+    {
+        gas->setState_TPY(T[0], p, Y);
     }
-    std::cerr << "], sum(Y)="<< sumY << "\n";
-    gas->setState_TPY(T[0], p, Y);
-    std::cerr << "  gas state: T="<< gas->temperature()
-          <<", rho="<< gas->density()
-          <<", cp="<< gas->cp_mass() <<"\n";
+    catch (const Cantera::CanteraError& err) 
+    {
+        double sumY = std::accumulate(Y, Y + (nx-1), 0.0);
+        std::cerr << "[myfgh] ERROR in setState_TPY(): " << err.what() << "\n";
+        std::cerr << "  T = " << T[0] << ", p = " << p << "\n";
+        std::cerr << "  Y = [";
+        for (int i = 0; i < nx-1; i++) {
+            std::cerr << Y[i] << (i+1<nx-1 ? ", " : "");
+        }
+        std::cerr << "], sum = " << sumY << "\n";
+        throw;
+    }
 
-    //set reactor and mechanisms
-    auto odes = newReactor("ConstPressureReactor", sol); 
-    std::cout<<"after newReactor()"<<std::endl;
-    auto reactor = std::static_pointer_cast<Reactor>(odes); 
-    ReactorNet net;
-    net.addReactor(*reactor);
-    std::cout<<"after addReactor()"<<std::endl;
+    //set reactor ODEs
+    try
+    {
+        auto odes = newReactor("ConstPressureReactor", sol); 
+        auto reactor = std::static_pointer_cast<Reactor>(odes); 
+        ReactorNet net;
+        net.addReactor(*reactor);
+    }
+    catch (const Cantera::CanteraError& err) 
+    {
+        std::cerr << "[myfgh] ERROR creating ConstPressureReactor: " 
+                  << err.what() << "\n";
+        std::cerr << "  sol ptr = " << sol.get() << "\n";
+        throw;
+    }
 
     //time and init
-    double tnow = 0.0;
-    net.setInitialTime(tnow);
-    net.initialize();
-    std::cout<<"after intialize()"<<std::endl;
+    try{
+        double tnow = 0.0;
+        net.setInitialTime(tnow);
+        net.initialize();
+    }
+    catch (const Cantera::CanteraError& err)
+    {
+        std::cerr << "[myfgh] ERROR in net.initialize(): " << err.what() << "\n";
+        std::cerr << "  initial time = 0.0\n";
+        throw;
+    }
 
     //integrate
-    net.advance(dt);
+    try 
+    {
+        net.advance(dt);
+    } 
+    catch (const Cantera::CanteraError& err) 
+    {
+        std::cerr << "!!! CVODE failed at dt="<<dt<<": "<<err.what()<<"\n";
+        std::cerr << "    last x    = [";
+        for (int i = 0; i < nx; i++) std::cerr << x[i] << (i+1<nx?", ":"");
+        std::cerr << "]\n";
+        std::cerr << "    last ptcl = [";
+        for (int i = 0; i < nx; i++) std::cerr << ptcl[i] << (i+1<nx?", ":"");
+        std::cerr << "]\n";
+        throw;
+    }
 
     //stuff stuff
     size_t neq = reactor->neq();
     std::vector<double> y(neq);
     size_t n_species = gas->nSpecies();
     
-    //get state and normalize
-    reactor->getState(y.data());
-    toxhat(y.data(), f, nx, rusr);
-    std::cout<<"after toxhat()"<<std::endl;
-    myfnn(nx, x, fnn);
-    std::cout<<"after myfnn()"<<std::endl;
+    //get state
+    try
+    {
+        reactor->getState(y.data());
+    }
+    catch (const Cantera::CanteraError& err) 
+    {
+        std::cerr << "[myfgh] ERROR in getState(): " << e.what() << "\n";
+        std::cerr << "  neq = " << reactorPtr->neq() << "\n";
+        throw;
+    }
+    
+    //normalize and fnn
+    try
+    {
+        toxhat(y.data(), f, nx, rusr);
+        myfnn(nx, x, fnn);
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "[myfgh] ERROR in toxhat()/myfnn(): " << e.what() << "\n";
+        std::cerr << "  y  = [";
+        for (int i = 0; i < nx; i++) std::cerr << y[i] << (i+1<nx?", ":"");
+        std::cerr << "]\n";
+        std::cerr << "  f  = [";
+        for (int i = 0; i < nx; i++) std::cerr << f[i] << (i+1<nx?", ":"");
+        std::cerr << "]\n";
+        std::cerr << "  fnn= [";
+        for (int i = 0; i < nx; i++) std::cerr << fnn[i] << (i+1<nx?", ":"");
+        std::cerr << "]\n";
+        throw;
+    }
 
     //get reduced state
     for (int ii = 0; ii < nx; ii++)
     {
         f[ii] = f[ii] - x[ii] - fnn[ii];
-        // f[ii] = f[ii] - x[ii];
     }
-    std::cout<<"after reduced stated"<<std::endl;
 
     //JACOBIAN START
     if (need[1] == 1)
     {
         Eigen::SparseMatrix<double> jac_sparse = reactor->finiteDifferenceJacobian();
         Eigen::MatrixXd jac = Eigen::MatrixXd(jac_sparse);
-        std::cout<<"after jacobian()"<<std::endl;
 
         Eigen::MatrixXd jac_nn(nx, nx);
         const double eps = dx;  
