@@ -35,6 +35,7 @@ using namespace Cantera;
 namespace Gl
 {
 
+    cantera::setLogLevel(5);
     shared_ptr<Solution> sol;    // = newSolution("h2o2.yaml", "ohmech", "none");
     shared_ptr<ThermoPhase> gas; // = sol->thermo();
 
@@ -203,6 +204,13 @@ void myfnn(int &nx, double x[], double fnn[])
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
+
+    std::cerr << ">>> myfgh called; need[1]="<< need[1] <<", x = [";
+    for (int i = 0; i < nx; i++) {
+        std::cerr << x[i] << (i+1<nx? ", " : "");
+    }
+    std::cerr << "]\n";
+
     double Y[nx - 1]; //gas
     // std::vector<double> Y (nx-1);
     double T[1]; //temp
@@ -227,6 +235,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //un-normalize
     fromxhat(x, ptcl, nx, rusr);
+    for (int i = 0; i < nx; i++) {
+        if (!std::isfinite(ptcl[i])) {
+            std::cerr << "!!! ptcl["<<i<<"] = "<< ptcl[i] << "\n";
+        }
+    }
 
     //transfer arrays
     T[0] = ptcl[0];
@@ -236,8 +249,17 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     //which Reactor ODE class?
+    double sumY = 0.0;
+    std::cerr << "  T = " << T[0] << "; Y = [";
+    for (int i = 0; i < nx-1; i++) {
+        std::cerr << Y[i] << (i+1<nx-1? ", " : "");
+        sumY += Y[i];
+    }
+    std::cerr << "], sum(Y)="<< sumY << "\n";
     gas->setState_TPY(T[0], p, Y);
-    std::cout<<"after setState()"<<std::endl;
+    std::cerr << "  gas state: T="<< gas->temperature()
+          <<", rho="<< gas->density()
+          <<", cp="<< gas->cp_mass() <<"\n";
 
     //set reactor and mechanisms
     auto odes = newReactor("ConstPressureReactor", sol); 
