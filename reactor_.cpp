@@ -28,6 +28,7 @@
 #include <string>
 #include <iostream>
 #include <cstdio>
+#include <numeric>
 
 
 using namespace Cantera;
@@ -268,11 +269,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     //set reactor ODEs
+    ReactorNet net;
     try
     {
         auto odes = newReactor("ConstPressureReactor", sol); 
         auto reactor = std::static_pointer_cast<Reactor>(odes); 
-        ReactorNet net;
         net.addReactor(*reactor);
     }
     catch (const Cantera::CanteraError& err) 
@@ -325,7 +326,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
     catch (const Cantera::CanteraError& err) 
     {
-        std::cerr << "[myfgh] ERROR in getState(): " << e.what() << "\n";
+        std::cerr << "[myfgh] ERROR in getState(): " << err.what() << "\n";
         std::cerr << "  neq = " << reactorPtr->neq() << "\n";
         throw;
     }
