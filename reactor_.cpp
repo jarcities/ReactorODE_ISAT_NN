@@ -26,6 +26,9 @@
 #include <memory>
 #include <chrono>
 #include <string>
+#include <iostream>
+#include <cstdio>
+
 
 using namespace Cantera;
 
@@ -331,16 +334,21 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 {
 
     // std::cout<<"entered myfgh()"<<std::endl;
-    double Y[nx - 1]; //gas
+    // double Y[nx - 1]; //gas
     double T[1]; //temp
-    double ptcl[nx]; 
+    // double ptcl[nx]; 
     double *solution;
     double aTol = 1e-8; //rusr[2*nx];
     double rTol = 1e-8; //rusr[2*nx+1];
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4]; //pressure
-    double fnn[nx];
+    // double fnn[nx];
+
+    std::vector<double> ptcl(nx);
+    std::vector<double> Y (nx-1);
+    std::vector<double> fnn(nx);
+
 
     static int aaaa;
     if (aaaa != 7777)
@@ -368,9 +376,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     std::cout<<"after setState()"<<std::endl;
 
     //set reactor and mechanisms
-    auto odes = newReactor("ConstPressureReactor", sol); 
+    auto reactor = newReactor("ConstPressureReactor", sol); 
     std::cout<<"after newReactor()"<<std::endl;
-    auto reactor = std::static_pointer_cast<Reactor>(odes); 
+    // auto reactor = std::static_pointer_cast<Reactor>(odes); 
     ReactorNet net;
     net.addReactor(*reactor);
     std::cout<<"after addReactor()"<<std::endl;
