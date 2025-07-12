@@ -302,7 +302,8 @@ void myfnn(int &nx, double x[], double fnn[])
             for (int jj = 0; jj < n1[ll]; jj++)
             {
                 // x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
-                x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
+                // x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
+                x2[kk] += A[ ia[ll] + kk*n1[ll] + jj ] * x1[jj];
             }
             x2[kk] += b[ib[ll] + kk];
 
@@ -320,8 +321,8 @@ void myfnn(int &nx, double x[], double fnn[])
 
     for (int kk = 0; kk < nx; kk++)
     {
-        // fnn[kk] = x2[kk];
-        fnn[kk] = 0.0;
+        fnn[kk] = x2[kk];
+        // fnn[kk] = 0.0;
     }
 }
 
@@ -392,14 +393,14 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     reactor->getState(y.data());
     toxhat(y.data(), f, nx, rusr);
     std::cout<<"after toxhat()"<<std::endl;
-    // myfnn(nx, x, fnn);
+    myfnn(nx, x, fnn);
     std::cout<<"after myfnn()"<<std::endl;
 
     //get reduced state
     for (int ii = 0; ii < nx; ii++)
     {
-        // f[ii] = f[ii] - x[ii] - fnn[ii];
-        f[ii] = f[ii] - x[ii];
+        f[ii] = f[ii] - x[ii] - fnn[ii];
+        // f[ii] = f[ii] - x[ii];
     }
     std::cout<<"after reduced stated"<<std::endl;
 
@@ -410,33 +411,31 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         Eigen::MatrixXd jac = Eigen::MatrixXd(jac_sparse);
         std::cout<<"after jacobian()"<<std::endl;
 
-        for (int j = 0; j < nx; ++j)
-        {
-            for (int i = 0; i < nx; ++i)
-            {
-                double jac_eig = jac(i + 1, j);
-                double identity = (i == j ? 1.0 : 0.0);
-                g[i + j * nx] = jac_eig - identity;
-            }
-        }
-
-        // Eigen::MatrixXd jac_nn(nx, nx);
-        // const double eps = dx;  // reuse your finite-difference step
-        // std::vector<double> fnn_base(nx), fnn_p(nx), fnn_m(nx);
-        // myfnn(nx, x, fnn_base.data());
-        // for (int j = 0; j < nx; ++j) {
-        //     std::vector<double> x_p(x, x + nx), x_m(x, x + nx);
-        //     x_p[j] += eps;
-        //     x_m[j] -= eps;
-        //     myfnn(nx, x_p.data(), fnn_p.data());
-        //     myfnn(nx, x_m.data(), fnn_m.data());
-        //     for (int i = 0; i < nx; ++i) {
-        //         jac_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
-        //         double jac_eig = jac(i + 1, j);
-        //         double identity = (i == j ? 1.0 : 0.0);
-        //         g[i + j * nx] = jac_eig - identity - jac_nn(i, j);
+        // for (int j = 0; j < nx; ++j)
+        // {
+        //     for (int i = 0; i < nx; ++i)
+        //     {
+        //         g[i + j*nx] = jac(i, j) - (i == j ? 1.0 : 0.0);
         //     }
         // }
+
+        Eigen::MatrixXd jac_nn(nx, nx);
+        const double eps = dx;  // reuse your finite-difference step
+        std::vector<double> fnn_base(nx), fnn_p(nx), fnn_m(nx);
+        myfnn(nx, x, fnn_base.data());
+        for (int j = 0; j < nx; ++j) {
+            std::vector<double> x_p(x, x + nx), x_m(x, x + nx);
+            x_p[j] += eps;
+            x_m[j] -= eps;
+            myfnn(nx, x_p.data(), fnn_p.data());
+            myfnn(nx, x_m.data(), fnn_m.data());
+            for (int i = 0; i < nx; ++i) {
+                jac_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
+                double jac_eig = jac(i, j);
+                double identity = (i == j ? 1.0 : 0.0);
+                g[i + j * nx] = jac_eig - identity - jac_nn(i, j);
+            }
+        }
     }
     // {
 
@@ -540,7 +539,8 @@ void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double
         Y2[ii] -= alpha[0] * d; // mix mass fractions
     }
 
-    d = alpha[0] * (T2 - T1);
+    // d = alpha[0] * (T2 - T1); //original
+    d = alpha[0] * (T2[0] - T1[0]);
 
     gas->setState_TPY(T1[0] + d, p, Y1);
     gas->setState_HP(H1, p);
