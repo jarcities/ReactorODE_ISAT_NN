@@ -109,12 +109,12 @@ int main()
     /////////////////////////
     //// INIT CONDITIONS ////
     /////////////////////////
-    // std::string mechanism_ = "h2o2.yaml";
-    // std::string name_ = "ohmech";
-    // std::string comp_mix = "H2:2, O2:1, N2:4";
-    std::string mechanism_ = "nDodecane_Reitz.yaml";
-    std::string name_ = "nDodecane_IG";
-    std::string comp_mix = "c12h26:1, o2:1, n2:3.76";
+    std::string mechanism_ = "h2o2.yaml";
+    std::string name_ = "ohmech";
+    std::string comp_mix = "H2:2, O2:1, N2:4";
+    // std::string mechanism_ = "nDodecane_Reitz.yaml";
+    // std::string name_ = "nDodecane_IG";
+    // std::string comp_mix = "c12h26:1, o2:1, n2:3.76";
     double temp_ = 1001.0;
     double pressure_ = OneAtm;
     const double t0 = 0.0;

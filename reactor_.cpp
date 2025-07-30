@@ -1,18 +1,3 @@
-/*!
- * @file custom.cpp
- *
- * Custom Reactor
- *
- * Solve a closed-system constant pressure ignition problem where the governing
- * equations are custom-implemented, using Cantera's interface to CVODES to
- * integrate the equations.
- *
- * Keywords: combustion, reactor network, user-defined model, ignition delay
- */
-
-// This file is part of Cantera. See License.txt in the top-level directory or
-// at https://cantera.org/license.txt for license and copyright information.
-
 #include "reactor.hpp"
 #include <cmath>
 #include "cantera/core.h"
@@ -26,18 +11,14 @@
 #include <memory>
 #include <chrono>
 #include <string>
-#include <iostream>
-#include <cstdio>
-#include <numeric>
-
 
 using namespace Cantera;
 
 namespace Gl
 {
 
-    shared_ptr<Solution> sol;    // = newSolution("h2o2.yaml", "ohmech", "none");
-    shared_ptr<ThermoPhase> gas; // = sol->thermo();
+    shared_ptr<Solution> sol;    //= newSolution("h2o2.yaml", "ohmech", "none");
+    shared_ptr<ThermoPhase> gas; //= sol->thermo();
 
     int nLayers = 5;
     int nNeurons = 10;
@@ -108,13 +89,77 @@ namespace Gl
             fclose(pFile);
         }
 
-        // std::cerr<<A[ia[2]+3]<<std::endl;
-        // std::cerr<<b[ib[1]+4]<<std::endl;
+        //std::cerr<<A[ia[2]+3]<<std::endl;
+        //std::cerr<<b[ib[1]+4]<<std::endl;
     }
 
 }
 
 using namespace Gl;
+
+class ReactorODEs : public FuncEval
+{
+public:
+    ReactorODEs(shared_ptr<Solution> sol)
+    {
+        m_gas = sol->thermo();
+        m_kinetics = sol->kinetics();
+        m_pressure = m_gas->pressure();
+        m_nSpecies = m_gas->nSpecies();
+        m_hbar.resize(m_nSpecies);
+        m_wdot.resize(m_nSpecies);
+        m_nEqs = m_nSpecies + 1;
+    }
+
+    void eval(double t, double *y, double *ydot, double *p) override
+    {
+        double temperature = y[0];
+        double *massFracs = &y[1];
+        double *dTdt = &ydot[0];
+        double *dYdt = &ydot[1];
+
+        m_gas->setMassFractions_NoNorm(massFracs);
+        m_gas->setState_TP(temperature, m_pressure);
+        double rho = m_gas->density();
+        double cp = m_gas->cp_mass();
+        m_gas->getPartialMolarEnthalpies(&m_hbar[0]);
+        m_kinetics->getNetProductionRates(&m_wdot[0]);
+
+        //energy equation
+        double hdot_vol = 0;
+        for (size_t k = 0; k < m_nSpecies; k++)
+        {
+            hdot_vol += m_hbar[k] * m_wdot[k];
+        }
+        *dTdt = -hdot_vol / (rho * cp);
+
+        //species conservation equations
+        for (size_t k = 0; k < m_nSpecies; k++)
+        {
+            dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
+        }
+    }
+
+    size_t neq() const override
+    {
+        return m_nEqs;
+    }
+
+    void getState(double *y) override
+    {
+        y[0] = m_gas->temperature();
+        m_gas->getMassFractions(&y[1]);
+    }
+
+private:
+    shared_ptr<ThermoPhase> m_gas;
+    shared_ptr<Kinetics> m_kinetics;
+    vector<double> m_hbar;
+    vector<double> m_wdot;
+    double m_pressure;
+    size_t m_nSpecies;
+    size_t m_nEqs;
+};
 
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
 {
@@ -127,7 +172,7 @@ void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
         ptcl[ii] = rusr[ii] * exp(-log(rusr[ii]) * x[ii]) - rusr[ii];
     }
 
-    // for ( int ii = 0; ii < nx; ii++ ){ptcl[ii] = x[ii]*(100000.0*rusr[ii]);} // REMOVE THIS
+    //for ( int ii = 0; ii < nx; ii++ ){ptcl[ii] = x[ii]*(100000.0*rusr[ii]);} //REMOVE THIS
 }
 
 void toxhat(double ptcl[], double x[], int &nx, double rusr[])
@@ -141,7 +186,7 @@ void toxhat(double ptcl[], double x[], int &nx, double rusr[])
         x[ii] = -log((ptcl[ii] + rusr[ii]) / rusr[ii]) / log(rusr[ii]);
     }
 
-    // for ( int ii = 0; ii < nx; ii++ ){x[ii] = ptcl[ii]/(100000.0*rusr[ii]);} //REMOVE THIS
+    //for ( int ii = 0; ii < nx; ii++ ){x[ii] = ptcl[ii]/(100000.0*rusr[ii]);} //REMOVE THIS
 }
 
 double fAct(double x)
@@ -177,7 +222,7 @@ void myfnn(int &nx, double x[], double fnn[])
             x2[kk] = 0.0;
             for (int jj = 0; jj < n1[ll]; jj++)
             {
-                // x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
+                //x2[kk] += A[ ia[ll] + jj + (kk-1)*n1[ll] ]*x1[jj];
                 x2[kk] += A[ia[ll] + kk + (jj - 1) * n2[ll]] * x1[jj];
             }
             x2[kk] += b[ib[ll] + kk];
@@ -197,163 +242,64 @@ void myfnn(int &nx, double x[], double fnn[])
     for (int kk = 0; kk < nx; kk++)
     {
         fnn[kk] = x2[kk];
-        // fnn[kk] = 0.0;
     }
 }
 
+//The actual code is put into a function that can be called from the main program
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
-    double Y[nx - 1]; //gas
-    double T[1]; //temp
-    double ptcl[nx]; 
+
+    double Y[nx - 1];
+    double T[1];
+    double ptcl[nx];
     double *solution;
     double aTol = 1e-8; //rusr[2*nx];
     double rTol = 1e-8; //rusr[2*nx+1];
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
-    double p = rusr[2 * nx + 4]; //pressure
+    double p = rusr[2 * nx + 4];
     double fnn[nx];
 
     static int aaaa;
+
     if (aaaa != 7777)
     {
         Gl::initfgh();
         aaaa = 7777;
     }
 
-    //un-normalize
-    try
-    {
-        fromxhat(x, ptcl, nx, rusr);
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "[myfgh] ERROR in fromxhat(): " << e.what() << "\n";
-        std::cerr << "x = [";
-        for (int i = 0; i < nx; i++) {
-            std::cerr << x[i] << (i+1<nx ? ", " : "");
-        }
-        std::cerr << "]\n";
-        std::cerr << "rusr = [";
-        for (int i = 0; i < 2*nx+5; i++) {
-            std::cerr << rusr[i] << (i+1<2*nx+5 ? ", " : "");
-        }
-        std::cerr << "]\n";
-        throw;  
-    }
+    fromxhat(x, ptcl, nx, rusr);
 
-    //transfer arrays
     T[0] = ptcl[0];
     for (int ii = 1; ii < nx; ii++)
     {
         Y[ii - 1] = ptcl[ii];
     }
 
-    //set state
-    try
-    {
-        gas->setState_TPY(T[0], p, Y);
-    }
-    catch (const Cantera::CanteraError& err) 
-    {
-        double sumY = std::accumulate(Y, Y + (nx-1), 0.0);
-        std::cerr << "[myfgh] ERROR in setState_TPY(): " << err.what() << "\n";
-        std::cerr << "T = " << T[0] << ", p = " << p << "\n";
-        std::cerr << "Y = [";
-        for (int i = 0; i < nx-1; i++) {
-            std::cerr << Y[i] << (i+1<nx-1 ? ", " : "");
-        }
-        std::cerr << "], sum = " << sumY << "\n";
-        throw;
-    }
+    gas->setState_TPY(T[0], p, Y);
 
-    //set reactor ODEs
-    std::shared_ptr<Reactor> reactor;
-    ReactorNet net;
-    try
-    {
-        auto odes = newReactor("ConstPressureReactor", sol); 
-        reactor = std::static_pointer_cast<Reactor>(odes); 
-        net.addReactor(*reactor);
-    }
-    catch (const Cantera::CanteraError& err) 
-    {
-        std::cerr << "[myfgh] ERROR creating ConstPressureReactor: " 
-                  << err.what() << "\n";
-        std::cerr << "sol ptr = " << sol.get() << "\n";
-        throw;
-    }
+    //create ODE RHS evaluator
+    ReactorODEs odes = ReactorODEs(sol);
 
-    //time and init
-    try{
-        double tnow = 0.0;
-        net.setInitialTime(tnow);
-        net.initialize();
-    }
-    catch (const Cantera::CanteraError& err)
-    {
-        std::cerr << "[myfgh] ERROR in net.initialize(): " << err.what() << "\n";
-        std::cerr << "initial time = 0.0\n";
-        throw;
-    }
+    double tnow = 0.0;
 
-    //integrate
-    try 
-    {
-        net.advance(dt);
-    } 
-    catch (const Cantera::CanteraError& err) 
-    {
-        std::cerr << "!!! CVODE failed at dt="<<dt<<": "<<err.what()<<"\n";
-        std::cerr << "last x    = [";
-        for (int i = 0; i < nx; i++) std::cerr << x[i] << (i+1<nx?", ":"");
-        std::cerr << "]\n";
-        std::cerr << "last ptcl = [";
-        for (int i = 0; i < nx; i++) std::cerr << ptcl[i] << (i+1<nx?", ":"");
-        std::cerr << "]\n";
-        throw;
-    }
+    //double dt = 1e-4;
 
-    //stuff stuff
-    size_t neq = reactor->neq();
-    std::vector<double> y(neq);
-    size_t n_species = gas->nSpecies();
-    
-    //get state
-    try
-    {
-        reactor->getState(y.data());
-    }
-    catch (const Cantera::CanteraError& err) 
-    {
-        std::cerr << "[myfgh] ERROR in getState(): " << err.what() << "\n";
-        std::cerr << "neq = " << reactor->neq() << "\n";
-        throw;
-    }
-    
-    //normalize and fnn
-    try
-    {
-        toxhat(y.data(), f, nx, rusr);
-        myfnn(nx, x, fnn);
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "[myfgh] ERROR in toxhat()/myfnn(): " << e.what() << "\n";
-        std::cerr << "y  = [";
-        for (int i = 0; i < nx; i++) std::cerr << y[i] << (i+1<nx?", ":"");
-        std::cerr << "]\n";
-        std::cerr << "f  = [";
-        for (int i = 0; i < nx; i++) std::cerr << f[i] << (i+1<nx?", ":"");
-        std::cerr << "]\n";
-        std::cerr << "fnn= [";
-        for (int i = 0; i < nx; i++) std::cerr << fnn[i] << (i+1<nx?", ":"");
-        std::cerr << "]\n";
-        throw;
-    }
+    shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
 
-    //get reduced state
+    integrator->initialize(tnow, odes);
+
+    integrator->setTolerances(aTol, rTol);
+
+    integrator->integrate(dt);
+
+    solution = integrator->solution();
+
+    toxhat(solution, f, nx, rusr);
+
+    myfnn(nx, x, fnn);
+
     for (int ii = 0; ii < nx; ii++)
     {
         f[ii] = f[ii] - x[ii] - fnn[ii];
@@ -362,26 +308,63 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //JACOBIAN START
     if (need[1] == 1)
     {
-        Eigen::SparseMatrix<double> jac_sparse = reactor->finiteDifferenceJacobian();
-        Eigen::MatrixXd jac = Eigen::MatrixXd(jac_sparse);
 
-        Eigen::MatrixXd jac_nn(nx, nx);
-        const double eps = dx;  
-        std::vector<double> fnn_base(nx), fnn_p(nx), fnn_m(nx);
-        myfnn(nx, x, fnn_base.data());
+        double xp[nx];
+        double xm[nx];
+        double fp[nf];
+        double fm[nf];
 
-        for (int j = 0; j < nx; ++j) 
+        for (int ii = 0; ii < nx; ii++)
         {
-            std::vector<double> x_p(x, x + nx), x_m(x, x + nx);
-            x_p[j] += eps;
-            x_m[j] -= eps;
-            myfnn(nx, x_p.data(), fnn_p.data());
-            myfnn(nx, x_m.data(), fnn_m.data());
-            for (int i = 0; i < nx; ++i) {
-                jac_nn(i, j) = (fnn_p[i] - fnn_m[i]) / (2 * eps);
-                double jac_eig = jac(i, j);
-                double identity = (i == j ? 1.0 : 0.0);
-                g[i + j * nx] = jac_eig - identity - jac_nn(i, j);
+
+            for (int jj = 0; jj < nx; jj++)
+            {
+                xp[jj] = x[jj];
+                xm[jj] = x[jj];
+            }
+
+            xp[ii] += dx;
+            xm[ii] -= dx;
+
+            tnow = 0.0;
+            fromxhat(xp, ptcl, nx, rusr);
+            T[0] = ptcl[0];
+            for (int ii = 1; ii < nx; ii++)
+            {
+                Y[ii - 1] = ptcl[ii];
+            }
+            gas->setState_TPY(T[0], p, Y);
+            integrator->initialize(tnow, odes);
+            integrator->integrate(dt);
+            solution = integrator->solution();
+            toxhat(solution, fp, nx, rusr);
+            myfnn(nx, xp, fnn);
+            for (int ii = 0; ii < nx; ii++)
+            {
+                fp[ii] = fp[ii] - xp[ii] - fnn[ii];
+            }
+
+            tnow = 0.0;
+            fromxhat(xm, ptcl, nx, rusr);
+            T[0] = ptcl[0];
+            for (int ii = 1; ii < nx; ii++)
+            {
+                Y[ii - 1] = ptcl[ii];
+            }
+            gas->setState_TPY(T[0], p, Y);
+            integrator->initialize(tnow, odes);
+            integrator->integrate(dt);
+            solution = integrator->solution();
+            toxhat(solution, fm, nx, rusr);
+            myfnn(nx, xm, fnn);
+            for (int ii = 0; ii < nx; ii++)
+            {
+                fm[ii] = fm[ii] - xm[ii] - fnn[ii];
+            }
+
+            for (int jj = 0; jj < nx; jj++)
+            {
+                g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
             }
         }
     }
@@ -394,7 +377,7 @@ void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double
     double Y1[nx - 1], Y2[nx - 1];
     double H1, H2;
     double T1[1], T2[1], d;
-    double p = OneAtm; // rusr[2*nx+4];
+    double p = OneAtm; //rusr[2*nx+4];
 
     T1[0] = x1[0];
     for (int ii = 1; ii < nx; ii++)
@@ -417,17 +400,16 @@ void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double
 
     d = H2 - H1;
     H1 += alpha[0] * d;
-    H2 -= alpha[0] * d; // mix enthalpies
+    H2 -= alpha[0] * d; //mix enthalpies
 
     for (int ii = 0; ii < nx - 1; ii++)
     {
         d = Y2[ii] - Y1[ii];
         Y1[ii] += alpha[0] * d;
-        Y2[ii] -= alpha[0] * d; // mix mass fractions
+        Y2[ii] -= alpha[0] * d; //mix mass fractions
     }
 
-    // d = alpha[0] * (T2 - T1); //original
-    d = alpha[0] * (T2[0] - T1[0]);
+    d = alpha[0] * (T2 - T1);
 
     gas->setState_TPY(T1[0] + d, p, Y1);
     gas->setState_HP(H1, p);
