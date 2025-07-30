@@ -14,9 +14,20 @@ icpx -O2 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eig
 #compile f90 linking cantera and cpp 
 # ifx -O3 -L../cantera/build/lib -I../cantera/include -o main.exe driver_samples.f90 reactor.o \
 #	-lstdc++ -lcantera -Bstatic -L../ISAT/lib -I../ISAT/isatab_ser -lisat7_ser -L -mkl -Bdynamic -mkl -lstdc++
-ifx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -o main.exe driver_samples.f90 reactor_.o \
-	-lstdc++ -lcantera -Bstatic -L../isat/ISAT/lib -I../isat/ISAT/isatab_ser -lisat7_ser -qmkl \
-	-Bdynamic -qmkl -Wl,-rpath,$CONDA_PREFIX/lib
+ifx -O3 -L$CONDA_PREFIX/lib \
+    -I$CONDA_PREFIX/include  \
+	-lstdc++ -lcantera \
+    -Bstatic -L../isat/ISAT/lib -I../isat/ISAT/isatab_ser \
+    -lisat7_ser -qmkl \
+	-Bdynamic -qmkl \
+    -Wl,-rpath,$CONDA_PREFIX/lib \
+    -lcantera \
+    -lsundials_cvodes \
+    -lsundials_nvecserial \
+    -lsundials_sunmatrixdense \
+    -lsundials_sunlinsoldense \
+    -lsundials_core \
+    driver_samples.f90 reactor_.o -o main.exe
 
 #run program
 ./main.exe 2> error.txt
