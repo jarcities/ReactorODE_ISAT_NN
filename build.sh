@@ -16,6 +16,7 @@ icpx -O2 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eig
 #	-lstdc++ -lcantera -Bstatic -L../ISAT/lib -I../ISAT/isatab_ser -lisat7_ser -L -mkl -Bdynamic -mkl -lstdc++
 ifx -O3 -L$CONDA_PREFIX/lib \
     -I$CONDA_PREFIX/include  \
+    -o main.exe driver_samples.f90 reactor_.o \
 	-lstdc++ -lcantera \
     -Bstatic -L../isat/ISAT/lib -I../isat/ISAT/isatab_ser \
     -lisat7_ser -qmkl \
@@ -26,8 +27,7 @@ ifx -O3 -L$CONDA_PREFIX/lib \
     -lsundials_nvecserial \
     -lsundials_sunmatrixdense \
     -lsundials_sunlinsoldense \
-    -lsundials_core \
-    driver_samples.f90 reactor_.o -o main.exe
+    -lsundials_core 
 
 #run program
 ./main.exe 2> error.txt
