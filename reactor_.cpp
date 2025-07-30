@@ -11,6 +11,18 @@
 #include <memory>
 #include <chrono>
 #include <string>
+// Added includes for CVODES sensitivity analysis
+#include <cvodes/cvodes.h>
+#include <nvector/nvector_serial.h>
+#include <sunmatrix/sunmatrix_dense.h>
+#include <sunlinsol/sunlinsol_dense.h>
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_context.h>
+#include <cassert>
+
+#ifndef SUN_COMM_NULL
+#define SUN_COMM_NULL NULL
+#endif
 
 using namespace Cantera;
 
@@ -161,6 +173,34 @@ private:
     size_t m_nEqs;
 };
 
+// RHS function for CVODES sensitivity analysis
+static int RHS_CVODES(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    ReactorODEs *odes = static_cast<ReactorODEs *>(user_data);
+    double *y_data = NV_DATA_S(y);
+    double *yd_data = NV_DATA_S(ydot);
+    
+    // Create temporary arrays for the eval function
+    std::vector<double> y_vec(odes->neq());
+    std::vector<double> ydot_vec(odes->neq());
+    std::vector<double> p_vec; // dummy parameter vector
+    
+    // Copy data from SUNDIALS vectors
+    for (size_t i = 0; i < odes->neq(); i++) {
+        y_vec[i] = y_data[i];
+    }
+    
+    // Call the existing eval function
+    odes->eval((double)t, y_vec.data(), ydot_vec.data(), p_vec.data());
+    
+    // Copy result back to SUNDIALS vector
+    for (size_t i = 0; i < odes->neq(); i++) {
+        yd_data[i] = ydot_vec[i];
+    }
+    
+    return 0;
+}
+
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
 {
 
@@ -305,7 +345,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         f[ii] = f[ii] - x[ii] - fnn[ii];
     }
 
-    //JACOBIAN START
+    //JACOBIAN START - OLD CENTRAL DIFFERENCE APPROACH (COMMENTED OUT)
+    /*
     if (need[1] == 1)
     {
 
@@ -368,7 +409,179 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
     }
-    //JACOBIAN END
+    */
+    //JACOBIAN END - OLD CENTRAL DIFFERENCE APPROACH
+    
+    //JACOBIAN START - NEW SENSITIVITY-BASED APPROACH
+    if (need[1] == 1)
+    {
+        // Create SUNDIALS context
+        SUNContext sunctx;
+        int flag = SUNContext_Create(SUN_COMM_NULL, &sunctx);
+        assert(flag >= 0);
+
+        // Convert initial conditions to physical space
+        fromxhat(x, ptcl, nx, rusr);
+        T[0] = ptcl[0];
+        for (int ii = 1; ii < nx; ii++)
+        {
+            Y[ii - 1] = ptcl[ii];
+        }
+        gas->setState_TPY(T[0], p, Y);
+
+        // Create ReactorODEs object for sensitivity analysis
+        ReactorODEs odes_sens = ReactorODEs(sol);
+        size_t NEQ = odes_sens.neq();
+
+        // Allocate state vector and set initial conditions
+        N_Vector y = N_VNew_Serial(NEQ, sunctx);
+        assert(y);
+        double *y_data = NV_DATA_S(y);
+        odes_sens.getState(y_data);
+
+        // Create CVODES solver
+        void *cvode_mem = CVodeCreate(CV_BDF, sunctx);
+        assert(cvode_mem);
+        flag = CVodeInit(cvode_mem, RHS_CVODES, 0.0, y);
+        assert(flag >= 0);
+
+        // Set tolerances
+        flag = CVodeSStolerances(cvode_mem, rTol, aTol);
+        assert(flag >= 0);
+        flag = CVodeSetUserData(cvode_mem, &odes_sens);
+        assert(flag >= 0);
+        flag = CVodeSetMaxNumSteps(cvode_mem, 50000);
+        assert(flag >= 0);
+        flag = CVodeSetMaxStep(cvode_mem, 1e-6);
+        assert(flag >= 0);
+
+        // Set linear solver
+        SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
+        assert(A);
+        SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
+        assert(LS);
+        flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+        assert(flag >= 0);
+
+        // Setup sensitivity analysis
+        int Ns = (int)NEQ;
+        N_Vector *yS = N_VCloneVectorArray(Ns, y);
+        assert(yS);
+        for (int is = 0; is < Ns; ++is)
+        {
+            for (int j = 0; j < (int)NEQ; ++j)
+            {
+                // Initialize sensitivity vectors as identity matrix
+                NV_Ith_S(yS[is], j) = (is == j ? 1.0 : 0.0);
+            }
+        }
+
+        // Initialize forward sensitivity
+        flag = CVodeSensInit(cvode_mem, Ns, CV_STAGGERED, nullptr, yS);
+        assert(flag >= 0);
+        flag = CVodeSensEEtolerances(cvode_mem);
+        assert(flag >= 0);
+
+        // Set sensitivity parameters
+        std::vector<sunrealtype> p_vec(NEQ);
+        std::vector<sunrealtype> pbar_vec(NEQ);
+        for (int i = 0; i < NEQ; i++)
+        {
+            p_vec[i] = y_data[i];
+            pbar_vec[i] = (fabs(y_data[i]) > 1e-12) ? fabs(y_data[i]) : 1.0;
+        }
+        flag = CVodeSetSensParams(cvode_mem, p_vec.data(), pbar_vec.data(), nullptr);
+        assert(flag >= 0);
+
+        // Integrate with sensitivity
+        double t_final = dt;
+        double t_current = 0.0;
+        flag = CVode(cvode_mem, t_final, y, &t_current, CV_NORMAL);
+        if (flag < 0)
+        {
+            std::cerr << "CVODES integration failed with flag: " << flag << std::endl;
+            // Clean up and fall back to finite difference if needed
+            N_VDestroy(y);
+            N_VDestroyVectorArray(yS, Ns);
+            CVodeFree(&cvode_mem);
+            SUNMatDestroy(A);
+            SUNLinSolFree(LS);
+            SUNContext_Free(&sunctx);
+            return; // or implement fallback
+        }
+
+        // Get final sensitivity matrix
+        flag = CVodeGetSens(cvode_mem, &t_current, yS);
+        assert(flag >= 0);
+
+        // Extract final solution in physical space
+        std::vector<double> final_solution(NEQ);
+        for (int i = 0; i < (int)NEQ; i++)
+        {
+            final_solution[i] = NV_Ith_S(y, i);
+        }
+
+        // Convert final solution to normalized space
+        std::vector<double> f_sens(nx);
+        toxhat(final_solution.data(), f_sens.data(), nx, rusr);
+
+        // Apply NN correction
+        myfnn(nx, x, fnn);
+        for (int ii = 0; ii < nx; ii++)
+        {
+            f_sens[ii] = f_sens[ii] - x[ii] - fnn[ii];
+        }
+
+        // Build jacobian from sensitivity matrix
+        // J[i][j] represents df_i/dx_j
+        for (int j = 0; j < nx; ++j)  // columns (input variables)
+        {
+            double *Sj = NV_DATA_S(yS[j]);
+            
+            // Transform sensitivities from physical to normalized space
+            std::vector<double> dSol_dxj(nx);
+            toxhat(Sj, dSol_dxj.data(), nx, rusr);
+            
+            // Apply chain rule for transformations and NN
+            for (int i = 0; i < nx; ++i)  // rows (output variables)
+            {
+                // The jacobian includes: d(final_state - initial_state - NN_pred)/d(initial_state)
+                // = d(final_state)/d(initial_state) - I - d(NN_pred)/d(initial_state)
+                double jacobian_element = dSol_dxj[i];
+                
+                if (i == j) {
+                    jacobian_element -= 1.0; // subtract identity matrix
+                }
+                
+                // Subtract NN jacobian contribution (finite difference for NN)
+                double fnn_plus[nx], fnn_minus[nx];
+                double x_plus[nx], x_minus[nx];
+                for (int k = 0; k < nx; k++) {
+                    x_plus[k] = x[k];
+                    x_minus[k] = x[k];
+                }
+                x_plus[j] += dx;
+                x_minus[j] -= dx;
+                
+                myfnn(nx, x_plus, fnn_plus);
+                myfnn(nx, x_minus, fnn_minus);
+                
+                double dNN_dx = (fnn_plus[i] - fnn_minus[i]) / (2.0 * dx);
+                jacobian_element -= dNN_dx;
+                
+                g[i + j * nx] = jacobian_element;
+            }
+        }
+
+        // Clean up SUNDIALS objects
+        N_VDestroy(y);
+        N_VDestroyVectorArray(yS, Ns);
+        CVodeFree(&cvode_mem);
+        SUNMatDestroy(A);
+        SUNLinSolFree(LS);
+        SUNContext_Free(&sunctx);
+    }
+    //JACOBIAN END - NEW SENSITIVITY-BASED APPROACH
 }
 
 void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[])
