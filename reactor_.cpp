@@ -123,7 +123,7 @@ public:
         m_nEqs = m_nSpecies + 1;
     }
 
-    void eval(double t, double *y, double *ydot, double *p) override
+    void eval(double t, double *y, double *ydot /*,double *p*/) override
     {
         double temperature = y[0];
         double *massFracs = &y[1];
@@ -394,7 +394,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     flag = CVode(m_cvode_mem, tfinal, y, &t, CV_NORMAL);
     if (flag < 0)
     {
-        cout << "integration failed -> " << flag << endl;
+        std::cout << "integration failed -> " << flag << std::endl;
         if (yS) N_VDestroyVectorArray(yS, Ns);
         N_VDestroy(y);
         N_VDestroyVectorArray(yS, Ns);
