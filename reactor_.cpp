@@ -137,7 +137,7 @@ public:
         //species equation
         for (size_t k = 0; k < m_nSpecies; k++)
         {
-            dYdt[1+k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
+            dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
         }
     }
 
