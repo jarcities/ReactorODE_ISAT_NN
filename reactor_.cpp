@@ -152,6 +152,16 @@ public:
         m_gas->getMassFractions(&y[1]);
     }
 
+    size_t nSpecies() const
+    {
+        return m_nSpecies;
+    }
+
+    const std::vector<std::string> &speciesNames() const
+    {
+        return m_gas->speciesNames();
+    }
+
 private:
     shared_ptr<ThermoPhase> m_gas;
     shared_ptr<Kinetics> m_kinetics;
@@ -245,6 +255,15 @@ void myfnn(int &nx, double x[], double fnn[])
     }
 }
 
+static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    ReactorODEs *odes = static_cast<ReactorODEs *>(user_data);
+    double *y_data = NV_DATA_S(y);
+    double *yd_data = NV_DATA_S(ydot);
+    odes->eval((double)t, y_data, yd_data);
+    return 0;
+}
+
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
@@ -259,6 +278,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4];
     double fnn[nx];
+    //set init conditions
+    double tnow = 0.0;
+    double t = tnow;
+    const double tfinal = 1e-4;
 
     static int aaaa;
 
@@ -277,92 +300,181 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     gas->setState_TPY(T[0], p, Y);
-
     ReactorODEs odes = ReactorODEs(sol);
+    size_t NEQ = odes.neq();
+    size_t Nsp = odes.nSpecies();
+    const auto &names = odes.speciesNames();
 
-    double tnow = 0.0;
+    //CVODE sens stuff
+    SUNContext sunctx;
+    int flag = SUNContext_Create(SUN_COMM_NULL, &sunctx);
+    N_Vector y = N_VNew_Serial(NEQ, sunctx);
+    assert(y);
+    double *y_data = NV_DATA_S(y);
+    odes.getState(y_data);
+    void *m_cvode_mem = CVodeCreate(CV_BDF, sunctx); //line 287 cpp, line 98 header file
+    assert(m_cvode_mem);
+    flag = CVodeInit(m_cvode_mem, RHS, t0, y);
+    assert(flag >= 0);
+    flag = CVodeSStolerances(m_cvode_mem, rtol, atol);
+    assert(flag >= 0);
+    flag = CVodeSetUserData(m_cvode_mem, &odes);
+    assert(flag >= 0);
+    flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
+    assert(flag >= 0);
+    flag = CVodeSetMaxStep(m_cvode_mem, 1e-6);
+    assert(flag >= 0);
+    SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
+    assert(A);
+    SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
+    assert(LS);
+    flag = CVodeSetLinearSolver(m_cvode_mem, LS, A);
+    assert(flag >= 0);
+    
+    //INTEGRATE
+    flag = CVode(m_cvode_mem, tfinal, y, &t, CV_NORMAL);
+    if (flag < 0)
+    {
+        cout << "integration failed -> " << flag << endl;
+        return 1;
+    }
 
-    shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
+    // shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
 
-    integrator->initialize(tnow, odes);
+    // integrator->initialize(tnow, odes);
 
-    integrator->setTolerances(aTol, rTol);
+    // integrator->setTolerances(aTol, rTol);
 
-    integrator->integrate(dt);
+    // integrator->integrate(dt);
 
-    solution = integrator->solution();
+    // solution = integrator->solution();
 
-    toxhat(solution, f, nx, rusr);
+    toxhat(y, f, nx, rusr);
 
-    myfnn(nx, x, fnn);
+    // myfnn(nx, x, fnn);
 
     for (int ii = 0; ii < nx; ii++)
     {
-        f[ii] = f[ii] - x[ii] - fnn[ii];
+        // f[ii] = f[ii] - x[ii] - fnn[ii];
+        f[ii] = f[ii] - x[ii];
     }
 
+    //JACOBIAN START
     if (need[1] == 1)
     {
-
-        double xp[nx];
-        double xm[nx];
-        double fp[nf];
-        double fm[nf];
-
-        for (int ii = 0; ii < nx; ii++)
+        //setup sensitivity analysis
+        int Ns = (int)NEQ; 
+        N_Vector *yS = N_VCloneVectorArray(Ns, f);
+        assert(yS);
+        for (int is = 0; is < Ns; ++is)
         {
-
-            for (int jj = 0; jj < nx; jj++)
+            for (int j = 0; j < (int)NEQ; ++j)
             {
-                xp[jj] = x[jj];
-                xm[jj] = x[jj];
-            }
-
-            xp[ii] += dx;
-            xm[ii] -= dx;
-
-            tnow = 0.0;
-            fromxhat(xp, ptcl, nx, rusr);
-            T[0] = ptcl[0];
-            for (int ii = 1; ii < nx; ii++)
-            {
-                Y[ii - 1] = ptcl[ii];
-            }
-            gas->setState_TPY(T[0], p, Y);
-            integrator->initialize(tnow, odes);
-            integrator->integrate(dt);
-            solution = integrator->solution();
-            toxhat(solution, fp, nx, rusr);
-            myfnn(nx, xp, fnn);
-            for (int ii = 0; ii < nx; ii++)
-            {
-                fp[ii] = fp[ii] - xp[ii] - fnn[ii];
-            }
-
-            tnow = 0.0;
-            fromxhat(xm, ptcl, nx, rusr);
-            T[0] = ptcl[0];
-            for (int ii = 1; ii < nx; ii++)
-            {
-                Y[ii - 1] = ptcl[ii];
-            }
-            gas->setState_TPY(T[0], p, Y);
-            integrator->initialize(tnow, odes);
-            integrator->integrate(dt);
-            solution = integrator->solution();
-            toxhat(solution, fm, nx, rusr);
-            myfnn(nx, xm, fnn);
-            for (int ii = 0; ii < nx; ii++)
-            {
-                fm[ii] = fm[ii] - xm[ii] - fnn[ii];
-            }
-
-            for (int jj = 0; jj < nx; jj++)
-            {
-                g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
+                /*init sens vectors as identity so each variables 
+                init sens with respect to itself is 1 and for others 0*/
+                NV_Ith_S(yS[is], j) = (is == j ? 1.0 : 0.0);
             }
         }
+        //forward sens
+        flag = CVodeSensInit(m_cvode_mem, Ns, CV_STAGGERED, /*fS*/ nullptr, yS); //line 235 cpp
+        assert(flag >= 0);
+        flag = CVodeSensEEtolerances(m_cvode_mem);
+        assert(flag >= 0);
+        vector<sunrealtype> p(NEQ);
+        vector<sunrealtype> pbar(NEQ);
+        for (int i = 0; i < NEQ; i++)
+        {
+            p[i] = y_data[i];                                            
+            pbar[i] = (fabs(y_data[i]) > 1e-12) ? fabs(y_data[i]) : 1.0; 
+        }
+        //set sens parameters
+        flag = CVodeSetSensParams(m_cvode_mem,
+                                p.data(),    
+                                pbar.data(), 
+                                nullptr);    
+        assert(flag >= 0);
+        //get final sens into jac matrix
+        flag = CVodeGetSens(m_cvode_mem, &t, yS);
+        assert(flag >= 0);
+        std::vector<std::vector<double>> J;
+        J.resize(NEQ, std::vector<double>(NEQ));
+        for (int j = 0; j < (int)NEQ; ++j)
+        {
+            double *Sj = NV_DATA_S(yS[j]);
+            for (int i = 0; i < (int)NEQ; ++i)
+            {
+                J[i][j] = Sj[i];
+            }
+        }
+
+        // double xp[nx];
+        // double xm[nx];
+        // double fp[nf];
+        // double fm[nf];
+
+        // for (int ii = 0; ii < nx; ii++)
+        // {
+
+        //     for (int jj = 0; jj < nx; jj++)
+        //     {
+        //         xp[jj] = x[jj];
+        //         xm[jj] = x[jj];
+        //     }
+
+        //     xp[ii] += dx;
+        //     xm[ii] -= dx;
+
+        //     tnow = 0.0;
+        //     fromxhat(xp, ptcl, nx, rusr);
+        //     T[0] = ptcl[0];
+        //     for (int ii = 1; ii < nx; ii++)
+        //     {
+        //         Y[ii - 1] = ptcl[ii];
+        //     }
+        //     gas->setState_TPY(T[0], p, Y);
+        //     integrator->initialize(tnow, odes);
+        //     integrator->integrate(dt);
+        //     solution = integrator->solution();
+        //     toxhat(solution, fp, nx, rusr);
+        //     myfnn(nx, xp, fnn);
+        //     for (int ii = 0; ii < nx; ii++)
+        //     {
+        //         fp[ii] = fp[ii] - xp[ii] - fnn[ii];
+        //     }
+
+        //     tnow = 0.0;
+        //     fromxhat(xm, ptcl, nx, rusr);
+        //     T[0] = ptcl[0];
+        //     for (int ii = 1; ii < nx; ii++)
+        //     {
+        //         Y[ii - 1] = ptcl[ii];
+        //     }
+        //     gas->setState_TPY(T[0], p, Y);
+        //     integrator->initialize(tnow, odes);
+        //     integrator->integrate(dt);
+        //     solution = integrator->solution();
+        //     toxhat(solution, fm, nx, rusr);
+        //     myfnn(nx, xm, fnn);
+        //     for (int ii = 0; ii < nx; ii++)
+        //     {
+        //         fm[ii] = fm[ii] - xm[ii] - fnn[ii];
+        //     }
+
+        //     for (int jj = 0; jj < nx; jj++)
+        //     {
+        //         g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
+        //     }
+        // }
     }
+    //JACOBIAN END
+
+    //deallocate
+    N_VDestroy(y);
+    N_VDestroyVectorArray(yS, Ns);
+    CVodeFree(&m_cvode_mem);
+    SUNMatDestroy(A);
+    SUNLinSolFree(LS);
+    SUNContext_Free(&sunctx);
 }
 
 void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[])

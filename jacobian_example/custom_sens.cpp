@@ -40,6 +40,8 @@ public:
     {
         double temperature = y[0];
         const double *Y = y + 1;
+        double *dYdt = &ydot[1];
+        double *dTdt = &ydot[0];
 
         //update gas state
         m_gas->setMassFractions_NoNorm(Y);
@@ -57,12 +59,14 @@ public:
         {
             hdot_vol += m_hbar[k] * m_wdot[k];
         }
-        ydot[0] = -hdot_vol / (rho * cp);
+        //ydot[0] originally
+        *dTdt = -hdot_vol / (rho * cp);
 
         //species equation
         for (size_t k = 0; k < m_nSpecies; k++)
         {
-            ydot[1 + k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
+            //ydot[1+k] originally
+            dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
         }
     }
 
@@ -122,7 +126,7 @@ int main()
     const double tfinal = 1e-4;
     const double reltol = 1e-6;
     const double abstol = 1e-9;
-    int ToT = 1; //0 print, 1 save to csv, 2 both
+    int ToT = 0; //0 print, 1 save to csv, 2 both
 
     //init gas object and IC
     auto sol = newSolution(mechanism_, name_, "none");
