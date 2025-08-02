@@ -1,0 +1,24 @@
+terminate called after throwing an instance of 'Cantera::CanteraError'
+  what():  
+*******************************************************************************
+CanteraError thrown by Phase::setTemperature:
+temperature must be positive. T = -109.31276054916384
+*******************************************************************************
+
+forrtl: error (76): Abort trap signal
+Image              PC                Routine            Line        Source             
+libc.so.6          000015554CE3EBF0  Unknown               Unknown  Unknown
+libc.so.6          000015554CE8BEDC  Unknown               Unknown  Unknown
+libc.so.6          000015554CE3EB46  raise                 Unknown  Unknown
+libc.so.6          000015554CE28833  abort                 Unknown  Unknown
+libstdc++.so.6.0.  00001555553EBFAE  _ZN9__gnu_cxx27__     Unknown  Unknown
+libstdc++.so.6.0.  00001555553EA4F2  Unknown               Unknown  Unknown
+libstdc++.so.6.0.  00001555553E42F3  _ZSt10unexpectedv     Unknown  Unknown
+libstdc++.so.6.0.  00001555553EA75E  __cxa_current_exc     Unknown  Unknown
+libcantera.so.3.1  0000155554DDACA7  Unknown               Unknown  Unknown
+main.exe           0000000000412006  Unknown               Unknown  Unknown
+main.exe           000000000040EB40  Unknown               Unknown  Unknown
+main.exe           00000000004077CD  Unknown               Unknown  Unknown
+libc.so.6          000015554CE295D0  Unknown               Unknown  Unknown
+libc.so.6          000015554CE29680  __libc_start_main     Unknown  Unknown
+main.exe           00000000004076E5  Unknown               Unknown  Unknown
