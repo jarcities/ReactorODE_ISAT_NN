@@ -123,7 +123,7 @@ public:
         m_nEqs = m_nSpecies + 1;
     }
 
-    void eval(double t, double *y, double *ydot /*,double *p*/) override
+    void eval(double t, double *y, double *ydot /*,double *p*/)
     {
         double temperature = y[0];
         double *massFracs = &y[1];
@@ -357,10 +357,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //JACOBIAN START
     N_Vector *yS = nullptr;
     // int Ns = 0;
+    int Ns = (int)NEQ; 
     if (need[1] == 1)
     {
         //setup sensitivity analysis
-        int Ns = (int)NEQ; 
         yS = N_VCloneVectorArray(Ns, y);
         assert(yS);
         for (int is = 0; is < Ns; ++is)
