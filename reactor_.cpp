@@ -301,7 +301,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //set init conditions
     double tnow = 0.0;
     double t = tnow;
-    const double tfinal = 1e-5;
+    const double tfinal = 1e-3;
 
     static int aaaa;
 
