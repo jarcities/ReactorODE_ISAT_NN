@@ -124,7 +124,8 @@ public:
         m_nEqs = m_nSpecies + 1;
     }
 
-    void eval(double t, double *y, double *ydot /*,double *p*/)
+    // void eval(double t, double *y, double *ydot /*,double *p*/)
+    void eval(double t, double *y, double *ydot, double *p) override
     {
         double temperature = y[0];
         double *massFracs = &y[1];
@@ -152,6 +153,12 @@ public:
         {
             dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
         }
+    }
+
+    //???
+    void eval(double t, const double *y, double *ydot)
+    {
+        eval(t, const_cast<double*>(y), ydot, nullptr);
     }
 
     size_t neq() const override
