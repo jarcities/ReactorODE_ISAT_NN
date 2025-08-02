@@ -128,7 +128,7 @@ public:
     // void eval(double t, double *y, double *ydot, double *p) override
     {
         double temperature = y[0];
-        double *massFracs = &y[1];
+        double *massFracs = y+1; //originally &y[1]
         double *dTdt = &ydot[0];
         double *dYdt = &ydot[1];
 
