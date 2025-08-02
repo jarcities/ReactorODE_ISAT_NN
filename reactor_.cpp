@@ -13,6 +13,18 @@
 #include <memory>
 #include <chrono>
 #include <string>
+//CVODES stuff
+#include <cvodes/cvodes.h>
+#include <nvector/nvector_serial.h>
+#include <sunmatrix/sunmatrix_dense.h>
+#include <sunlinsol/sunlinsol_dense.h>
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_context.h>
+#include <cassert>
+#include <iostream>
+#ifndef SUN_COMM_NULL
+#define SUN_COMM_NULL NULL
+#endif
 
 using namespace Cantera;
 
@@ -271,13 +283,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double Y[nx - 1];
     double T[1];
     double ptcl[nx];
-    double *solution;
+    // double *solution;
     double aTol = 1e-8;
     double rTol = 1e-8;
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4];
-    double fnn[nx];
+    // double fnn[nx];
     //set init conditions
     double tnow = 0.0;
     double t = tnow;
@@ -302,8 +314,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     gas->setState_TPY(T[0], p, Y);
     ReactorODEs odes = ReactorODEs(sol);
     size_t NEQ = odes.neq();
-    size_t Nsp = odes.nSpecies();
-    const auto &names = odes.speciesNames();
+    // size_t Nsp = odes.nSpecies();
+    // const auto &names = odes.speciesNames();
 
     //CVODE sens stuff
     SUNContext sunctx;
@@ -314,9 +326,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     odes.getState(y_data);
     void *m_cvode_mem = CVodeCreate(CV_BDF, sunctx); //line 287 cpp, line 98 header file
     assert(m_cvode_mem);
-    flag = CVodeInit(m_cvode_mem, RHS, t0, y);
+    flag = CVodeInit(m_cvode_mem, RHS, tnow, y);
     assert(flag >= 0);
-    flag = CVodeSStolerances(m_cvode_mem, rtol, atol);
+    flag = CVodeSStolerances(m_cvode_mem, rTol, aTol);
     assert(flag >= 0);
     flag = CVodeSetUserData(m_cvode_mem, &odes);
     assert(flag >= 0);
@@ -330,14 +342,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(LS);
     flag = CVodeSetLinearSolver(m_cvode_mem, LS, A);
     assert(flag >= 0);
-    
-    //INTEGRATE
-    flag = CVode(m_cvode_mem, tfinal, y, &t, CV_NORMAL);
-    if (flag < 0)
-    {
-        cout << "integration failed -> " << flag << endl;
-        return 1;
-    }
 
     // shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
 
@@ -349,22 +353,15 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     // solution = integrator->solution();
 
-    toxhat(y, f, nx, rusr);
-
-    // myfnn(nx, x, fnn);
-
-    for (int ii = 0; ii < nx; ii++)
-    {
-        // f[ii] = f[ii] - x[ii] - fnn[ii];
-        f[ii] = f[ii] - x[ii];
-    }
 
     //JACOBIAN START
+    N_Vector *yS = nullptr;
+    // int Ns = 0;
     if (need[1] == 1)
     {
         //setup sensitivity analysis
         int Ns = (int)NEQ; 
-        N_Vector *yS = N_VCloneVectorArray(Ns, f);
+        yS = N_VCloneVectorArray(Ns, y);
         assert(yS);
         for (int is = 0; is < Ns; ++is)
         {
@@ -388,87 +385,56 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             pbar[i] = (fabs(y_data[i]) > 1e-12) ? fabs(y_data[i]) : 1.0; 
         }
         //set sens parameters
-        flag = CVodeSetSensParams(m_cvode_mem,
-                                p.data(),    
-                                pbar.data(), 
-                                nullptr);    
+        flag = CVodeSetSensParams(m_cvode_mem, p.data(), pbar.data(), nullptr);    
         assert(flag >= 0);
+    }
+    //JACOBIAN END
+
+    //INTEGRATE
+    flag = CVode(m_cvode_mem, tfinal, y, &t, CV_NORMAL);
+    if (flag < 0)
+    {
+        cout << "integration failed -> " << flag << endl;
+        if (yS) N_VDestroyVectorArray(yS, Ns);
+        N_VDestroy(y);
+        N_VDestroyVectorArray(yS, Ns);
+        CVodeFree(&m_cvode_mem);
+        SUNMatDestroy(A);
+        SUNLinSolFree(LS);
+        SUNContext_Free(&sunctx);
+        return;
+    }
+
+    toxhat(NV_DATA_S(y), f, nx, rusr); 
+
+    // myfnn(nx, x, fnn);
+
+    for (int ii = 0; ii < nx; ii++)
+    {
+        // f[ii] = f[ii] - x[ii] - fnn[ii];
+        f[ii] = f[ii] - x[ii];
+    }
+
+    //JACOBIAN START
+    if (need[1] == 1)
+    {
         //get final sens into jac matrix
         flag = CVodeGetSens(m_cvode_mem, &t, yS);
         assert(flag >= 0);
-        std::vector<std::vector<double>> J;
-        J.resize(NEQ, std::vector<double>(NEQ));
+
         for (int j = 0; j < (int)NEQ; ++j)
         {
             double *Sj = NV_DATA_S(yS[j]);
             for (int i = 0; i < (int)NEQ; ++i)
             {
-                J[i][j] = Sj[i];
+                g[i + j * nx] = Sj[i];
             }
         }
-
-        // double xp[nx];
-        // double xm[nx];
-        // double fp[nf];
-        // double fm[nf];
-
-        // for (int ii = 0; ii < nx; ii++)
-        // {
-
-        //     for (int jj = 0; jj < nx; jj++)
-        //     {
-        //         xp[jj] = x[jj];
-        //         xm[jj] = x[jj];
-        //     }
-
-        //     xp[ii] += dx;
-        //     xm[ii] -= dx;
-
-        //     tnow = 0.0;
-        //     fromxhat(xp, ptcl, nx, rusr);
-        //     T[0] = ptcl[0];
-        //     for (int ii = 1; ii < nx; ii++)
-        //     {
-        //         Y[ii - 1] = ptcl[ii];
-        //     }
-        //     gas->setState_TPY(T[0], p, Y);
-        //     integrator->initialize(tnow, odes);
-        //     integrator->integrate(dt);
-        //     solution = integrator->solution();
-        //     toxhat(solution, fp, nx, rusr);
-        //     myfnn(nx, xp, fnn);
-        //     for (int ii = 0; ii < nx; ii++)
-        //     {
-        //         fp[ii] = fp[ii] - xp[ii] - fnn[ii];
-        //     }
-
-        //     tnow = 0.0;
-        //     fromxhat(xm, ptcl, nx, rusr);
-        //     T[0] = ptcl[0];
-        //     for (int ii = 1; ii < nx; ii++)
-        //     {
-        //         Y[ii - 1] = ptcl[ii];
-        //     }
-        //     gas->setState_TPY(T[0], p, Y);
-        //     integrator->initialize(tnow, odes);
-        //     integrator->integrate(dt);
-        //     solution = integrator->solution();
-        //     toxhat(solution, fm, nx, rusr);
-        //     myfnn(nx, xm, fnn);
-        //     for (int ii = 0; ii < nx; ii++)
-        //     {
-        //         fm[ii] = fm[ii] - xm[ii] - fnn[ii];
-        //     }
-
-        //     for (int jj = 0; jj < nx; jj++)
-        //     {
-        //         g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
-        //     }
-        // }
     }
     //JACOBIAN END
 
     //deallocate
+    if (yS) N_VDestroyVectorArray(yS, Ns);
     N_VDestroy(y);
     N_VDestroyVectorArray(yS, Ns);
     CVodeFree(&m_cvode_mem);
