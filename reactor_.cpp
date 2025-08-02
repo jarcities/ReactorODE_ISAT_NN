@@ -124,8 +124,8 @@ public:
         m_nEqs = m_nSpecies + 1;
     }
 
-    // void eval(double t, double *y, double *ydot /*,double *p*/)
-    void eval(double t, double *y, double *ydot, double *p) override
+    void eval(double t, double *y, double *ydot /*,double *p*/)
+    // void eval(double t, double *y, double *ydot, double *p) override
     {
         double temperature = y[0];
         double *massFracs = &y[1];
@@ -155,11 +155,11 @@ public:
         }
     }
 
-    //???
-    void eval(double t, const double *y, double *ydot)
-    {
-        eval(t, const_cast<double*>(y), ydot, nullptr);
-    }
+    // //???
+    // void eval(double t, const double *y, double *ydot)
+    // {
+    //     eval(t, const_cast<double*>(y), ydot, nullptr);
+    // }
 
     size_t neq() const override
     {
@@ -292,9 +292,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];
     double ptcl[nx];
     // double *solution;
-    double aTol = 1e-8;
-    double rTol = 1e-8;
-    double dt = rusr[2 * nx + 2];
+    double aTol = 1e-9;
+    double rTol = 1e-6;
+    // double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4];
     // double fnn[nx];
