@@ -1,87 +1,23 @@
-[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:2998][CVode] The right-hand side routine failed at the first call.
-!!! CVODE failed at dt=5e-07: 
-*******************************************************************************
-CanteraError thrown by CVodesIntegrator::integrate:
-CVodes error encountered. Error code: -9
-CVode: The right-hand side routine failed at the first call.
-
-Exceptions caught during RHS evaluation:
-
-*******************************************************************************
-CanteraError thrown by checkFinite:
-ydot contains non-finite elements:
-
-ydot[4] = -nan
-ydot[5] = -nan
-ydot[6] = -nan
-ydot[7] = -nan
-ydot[8] = -nan
-ydot[9] = -nan
-*******************************************************************************
-
-Components with largest weighted error estimates:
-0: 0
-1: 0
-2: 0
-3: 0
-4: 0
-5: 0
-6: 0
-7: 0
-8: 0
-9: 0
-*******************************************************************************
-
-last x    = [-2.92424, 2.08666, 0, 0, 5.09542e-17, 0.90056, 0, 0, 0, 0, 0]
-last ptcl = [0.333872, 271213, 0, 0, 1.27055e-21, 0.210084, 0, 0, 0, 0, 0]
-terminate called after throwing an instance of 'Cantera::CanteraError'
-  what():  
-*******************************************************************************
-CanteraError thrown by CVodesIntegrator::integrate:
-CVodes error encountered. Error code: -9
-CVode: The right-hand side routine failed at the first call.
-
-Exceptions caught during RHS evaluation:
-
-*******************************************************************************
-CanteraError thrown by checkFinite:
-ydot contains non-finite elements:
-
-ydot[4] = -nan
-ydot[5] = -nan
-ydot[6] = -nan
-ydot[7] = -nan
-ydot[8] = -nan
-ydot[9] = -nan
-*******************************************************************************
-
-Components with largest weighted error estimates:
-0: 0
-1: 0
-2: 0
-3: 0
-4: 0
-5: 0
-6: 0
-7: 0
-8: 0
-9: 0
-*******************************************************************************
-
+free(): invalid next size (fast)
 forrtl: error (76): Abort trap signal
 Image              PC                Routine            Line        Source             
-libc.so.6          000015554CE3E6F0  Unknown               Unknown  Unknown
-libc.so.6          000015554CE8B94C  Unknown               Unknown  Unknown
-libc.so.6          000015554CE3E646  raise                 Unknown  Unknown
-libc.so.6          000015554CE287F3  abort                 Unknown  Unknown
-libstdc++.so.6.0.  00001555553EBFAE  _ZN9__gnu_cxx27__     Unknown  Unknown
-libstdc++.so.6.0.  00001555553EA4F2  Unknown               Unknown  Unknown
-libstdc++.so.6.0.  00001555553E42F3  _ZSt10unexpectedv     Unknown  Unknown
-libstdc++.so.6.0.  00001555553EA75E  __cxa_current_exc     Unknown  Unknown
-main.exe           0000000000410CB4  Unknown               Unknown  Unknown
-main.exe           0000000000412FF8  Unknown               Unknown  Unknown
-main.exe           0000000000409980  Unknown               Unknown  Unknown
-main.exe           000000000040668D  Unknown               Unknown  Unknown
-libc.so.6          000015554CE29590  Unknown               Unknown  Unknown
-libc.so.6          000015554CE29640  __libc_start_main     Unknown  Unknown
-main.exe           00000000004065A5  Unknown               Unknown  Unknown
+libc.so.6          000015554CE3EBF0  Unknown               Unknown  Unknown
+libc.so.6          000015554CE8BEDC  Unknown               Unknown  Unknown
+libc.so.6          000015554CE3EB46  raise                 Unknown  Unknown
+libc.so.6          000015554CE28833  abort                 Unknown  Unknown
+libc.so.6          000015554CE29172  Unknown               Unknown  Unknown
+libc.so.6          000015554CE95F87  Unknown               Unknown  Unknown
+libc.so.6          000015554CE97893  Unknown               Unknown  Unknown
+libc.so.6          000015554CE9A2C5  free                  Unknown  Unknown
+libsundials_cvode  000015554D66CA72  N_VDestroy_Serial     Unknown  Unknown
+libsundials_cvode  000015554D64AA21  Unknown               Unknown  Unknown
+libsundials_cvode  000015554D64D5FD  CVodeFree             Unknown  Unknown
+libcantera.so.3.1  0000155555071937  _ZN7Cantera16CVod     Unknown  Unknown
+libcantera.so.3.1  0000155555071ACA  _ZN7Cantera16CVod     Unknown  Unknown
+main.exe           0000000000411A10  Unknown               Unknown  Unknown
+main.exe           00000000004146B8  Unknown               Unknown  Unknown
+main.exe           000000000040A940  Unknown               Unknown  Unknown
+main.exe           000000000040764D  Unknown               Unknown  Unknown
+libc.so.6          000015554CE295D0  Unknown               Unknown  Unknown
+libc.so.6          000015554CE29680  __libc_start_main     Unknown  Unknown
+main.exe           0000000000407565  Unknown               Unknown  Unknown
