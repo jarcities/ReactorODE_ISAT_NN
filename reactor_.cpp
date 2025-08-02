@@ -301,7 +301,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //set init conditions
     double tnow = 0.0;
     double t = tnow;
-    const double tfinal = 1e-3;
+    const double tfinal = 1e-5;
 
     static int aaaa;
 
@@ -342,7 +342,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
     assert(flag >= 0);
-    flag = CVodeSetMaxStep(m_cvode_mem, dt*0.1); //1e-6 original
+    flag = CVodeSetMaxStep(m_cvode_mem, dt*0.5); //1e-6 original
     assert(flag >= 0);
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
     assert(A);
