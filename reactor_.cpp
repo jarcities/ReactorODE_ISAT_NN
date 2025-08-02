@@ -27,6 +27,7 @@
 #endif
 
 using namespace Cantera;
+using namespace std;
 
 namespace Gl
 {
@@ -397,7 +398,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         std::cout << "integration failed -> " << flag << std::endl;
         if (yS) N_VDestroyVectorArray(yS, Ns);
         N_VDestroy(y);
-        N_VDestroyVectorArray(yS, Ns);
         CVodeFree(&m_cvode_mem);
         SUNMatDestroy(A);
         SUNLinSolFree(LS);
@@ -436,7 +436,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //deallocate
     if (yS) N_VDestroyVectorArray(yS, Ns);
     N_VDestroy(y);
-    N_VDestroyVectorArray(yS, Ns);
     CVodeFree(&m_cvode_mem);
     SUNMatDestroy(A);
     SUNLinSolFree(LS);
