@@ -292,8 +292,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];
     double ptcl[nx];
     // double *solution;
-    double aTol = 1e-10;
-    double rTol = 1e-10;
+    double aTol = 1e-6;
+    double rTol = 1e-6;
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4];
@@ -342,9 +342,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
     assert(flag >= 0);
-    flag = CVodeSetInitStep(m_cvode_mem, 1e-8); //set intial step size
-    assert(flag >= 0);
-    flag = CVodeSetMaxStep(m_cvode_mem, 1e-6); //1e-6 original
+    // flag = CVodeSetInitStep(m_cvode_mem, 1e-8); //set intial step size
+    // assert(flag >= 0);
+    flag = CVodeSetMaxStep(m_cvode_mem, 1e-8); //1e-6 original
     assert(flag >= 0);
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
     assert(A);
