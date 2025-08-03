@@ -292,8 +292,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];
     double ptcl[nx];
     // double *solution;
-    double aTol = 1e-8;
-    double rTol = 1e-8;
+    double aTol = 1e-9;
+    double rTol = 1e-6;
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4];
@@ -353,17 +353,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     flag = CVodeSetLinearSolver(m_cvode_mem, LS, A);
     assert(flag >= 0);
 
-    // shared_ptr<Integrator> integrator(newIntegrator("CVODE"));
-
-    // integrator->initialize(tnow, odes);
-
-    // integrator->setTolerances(aTol, rTol);
-
-    // integrator->integrate(dt);
-
-    // solution = integrator->solution();
-
-
     //JACOBIAN START
     N_Vector *yS = nullptr;
     // int Ns = 0;
@@ -377,8 +366,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         {
             for (int j = 0; j < (int)NEQ; ++j)
             {
-                /*init sens vectors as identity so each variables 
-                init sens with respect to itself is 1 and for others 0*/
                 NV_Ith_S(yS[is], j) = (is == j ? 1.0 : 0.0);
             }
         }
