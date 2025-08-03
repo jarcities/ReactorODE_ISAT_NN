@@ -342,7 +342,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
     assert(flag >= 0);
-    flag = CVodeSetMaxStep(m_cvode_mem, dt*0.1); //1e-6 original
+    flag = CVodeSetInitStep(m_cvode_mem, 1e-8); //set intial step size
+    assert(flag >= 0);
+    flag = CVodeSetMaxStep(m_cvode_mem, 1e-6); //1e-6 original
     assert(flag >= 0);
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
     assert(A);
