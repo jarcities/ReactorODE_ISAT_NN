@@ -292,8 +292,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];
     double ptcl[nx];
     // double *solution;
-    double aTol = 1e-8;
-    double rTol = 1e-8;
+    double aTol = 1e-10;
+    double rTol = 1e-10;
     double dt = rusr[2 * nx + 2];
     double dx = rusr[2 * nx + 3];
     double p = rusr[2 * nx + 4];
