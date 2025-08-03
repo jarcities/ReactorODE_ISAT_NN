@@ -7,7 +7,7 @@
  
 #compile cpp with linking cantera
 # icpx -O3 -L../cantera/build/lib -I../cantera/include -c reactor.cpp -lcantera
-icpx -O2 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eigen3 -c reactor_.cpp -lcantera
+icpx -O2 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eigen3 -c reactor.cpp -lcantera
 #debugging
 # icpx -g -fsanitize=address -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
 
@@ -16,7 +16,7 @@ icpx -O2 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eig
 #	-lstdc++ -lcantera -Bstatic -L../ISAT/lib -I../ISAT/isatab_ser -lisat7_ser -L -mkl -Bdynamic -mkl -lstdc++
 ifx -O3 -L$CONDA_PREFIX/lib \
     -I$CONDA_PREFIX/include  \
-    -o main.exe driver_samples.f90 reactor_.o \
+    -o main.exe driver_samples.f90 reactor.o \
 	-lstdc++ -lcantera \
     -Bstatic -L../isat/ISAT/lib -I../isat/ISAT/isatab_ser \
     -lisat7_ser -qmkl \

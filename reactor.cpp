@@ -378,11 +378,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     toxhat(solution, f, nx, rusr);
 
-    myfnn(nx, x, fnn);
+    // myfnn(nx, x, fnn);
 
     for (int ii = 0; ii < nx; ii++)
     {
-        f[ii] = f[ii] - x[ii] - fnn[ii];
+        // f[ii] = f[ii] - x[ii] - fnn[ii];
+        f[ii] = f[ii] - x[ii];
     }
 
     //JACOBIAN START
@@ -418,10 +419,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             integrator->integrate(dt);
             solution = integrator->solution();
             toxhat(solution, fp, nx, rusr);
-            myfnn(nx, xp, fnn);
+            // myfnn(nx, xp, fnn);
             for (int ii = 0; ii < nx; ii++)
             {
-                fp[ii] = fp[ii] - xp[ii] - fnn[ii];
+                // fp[ii] = fp[ii] - xp[ii] - fnn[ii];
+                fp[ii] = fp[ii] - xp[ii];
             }
 
             tnow = 0.0;
@@ -436,10 +438,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             integrator->integrate(dt);
             solution = integrator->solution();
             toxhat(solution, fm, nx, rusr);
-            myfnn(nx, xm, fnn);
+            // myfnn(nx, xm, fnn);
             for (int ii = 0; ii < nx; ii++)
             {
-                fm[ii] = fm[ii] - xm[ii] - fnn[ii];
+                // fm[ii] = fm[ii] - xm[ii] - fnn[ii];
+                fm[ii] = fm[ii] - xm[ii];
             }
 
             for (int jj = 0; jj < nx; jj++)
