@@ -137,9 +137,10 @@ program main
 		
 		!fisatsum = fisatsum + fisat
 		
-		call myfnn( nx, x, fnn )
+		! call myfnn( nx, x, fnn )
 		
-		x = x + f + fnn
+		! x = x + f + fnn
+        x = x + f
 		
 		call fromxhat( x, ptcls(1:nx,ii), nx, rusr )		
 	end do ! reaction
