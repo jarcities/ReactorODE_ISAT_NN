@@ -1,32 +1,40 @@
-#﻿!/bin/bash
-
-#export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
-#export CANTERA_INCLUDE_DIR=/mnt/c/complete/cantera/include
-#export CANTERA_INCLUDE_DIR=$CONDA_PREFIX/include
-#export CANTERA_LIB_DIR=/mnt/c/complete/cantera/build/lib
-#export CANTERA_LIB_DIR=$CONDA_PREFIX/lib
-#export ISATAB_SERIAL_DIR=/mnt/c/complete/ISAT/isatab_ser
-#export ISATAB_SERIAL_DIR=$HOME/Code/isat/ISAT/isatab_ser
-#export ISAT_LIB_DIR=/mnt/c/complete/ISAT/lib
-#export ISAT_LIB_DIR=$HOME/Code/isat/ISAT/lib
-
+#!/bin/bash
 rm *.o
 rm *.mod
 rm PaSR.exe
 
-#icpx -O3 -L$CANTERA_LIB_DIR -I$CANTERA_INCLUDE_DIR -c reactor.cpp -lcantera
-#icpx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -c reactor.cpp -lcantera
+# icpx -O3 -I$CONDA_PREFIX/include -c reactor.cpp #original
+icpx -O3 -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eigen3 -c reactor_.cpp
 
-#ifx -O3 -L$CANTERA_LIB_DIR -I$CANTERA_INCLUDE_DIR -o PaSR.exe PaSR.f90 reactor.o -lstdc++ -lcantera -Bstatic -L$ISAT_LIB_DIR -I$ISATAB_SERIAL_DIR -lisat7_ser -L -mkl -Bdynamic -mkl -lstdc++
-#ifx -O3 -L$CONDA_PREFIX/lib -I$CONDA_PREFIX/include -o PaSR.exe PaSR.f90 reactor.o -lstdc++ -lcantera -Bstatic -L../isat/ISAT/lib -I../isat/ISAT/isatab_ser -lisat7_ser -qmkl -Bdynamic -qmkl -Wl,-rpath,$CONDA_PREFIX/lib
-
-icpx -O3 -I$CONDA_PREFIX/include -c reactor.cpp
+# ifx -O3 \
+#     -L$CONDA_PREFIX/lib \
+#     -I$CONDA_PREFIX/include \
+#     -o PaSR.exe \
+#     PaSR.f90 reactor.o \
+#     -lstdc++ -lcantera \
+#     -Bstatic -L$HOME/code/isat/ISAT/lib -I$HOME/code/isat/ISAT/isatab_ser -lisat7_ser \
+#     -qmkl -Bdynamic -qmkl \
+#     -Wl,-rpath,$CONDA_PREFIX/lib
 ifx -O3 \
-    -L$CONDA_PREFIX/lib \
     -I$CONDA_PREFIX/include \
+    -I$HOME/code/isat/ISAT/isatab_ser \
     -o PaSR.exe \
-    PaSR.f90 reactor.o \
-    -lstdc++ -lcantera \
-    -Bstatic -L../isat/ISAT/lib -I../isat/ISAT/isatab_ser -lisat7_ser \
-    -qmkl -Bdynamic -qmkl \
+    PaSR_.f90 reactor_.o \
+    $HOME/code/isat/ISAT/lib/libisatab_ser.a \
+    $HOME/code/isat/ISAT/lib/libisat7_ser.a \
+    $HOME/code/isat/ISAT/lib/libice_pic.a \
+    $HOME/code/isat/ISAT/lib/libell.a \
+    $HOME/code/isat/ISAT/lib/libsell.a \
+    $HOME/code/isat/ISAT/lib/libceq.a \
+    $HOME/code/isat/ISAT/lib/libck.a \
+    $HOME/code/isat/ISAT/lib/libisatck.a \
+    -L$CONDA_PREFIX/lib \
+    -lstdc++ \
+    -lcantera \
+    -lsundials_cvodes \
+    -lsundials_nvecserial \
+    -lsundials_sunmatrixdense \
+    -lsundials_sunlinsoldense \
+    -lsundials_core \
+    -qmkl \
     -Wl,-rpath,$CONDA_PREFIX/lib

@@ -10,7 +10,7 @@ extern "C"
   
   void toxhat(double x[], double ptcl[], int &nx, double rusr[] );
   
-  void myfnn(int &nx, double x[], double fnn[]);
+  void myfnn(int &nx, double x[], double fnn[], double jnn[]); //JACOBIAN
   
   void fromxhat(double ptcl[], double x[], int &nx, double rusr[] );
 } //fortran90/C interface
@@ -36,6 +36,7 @@ namespace Gl{  // global variables
 	
 	extern int nLayers;
 	extern int nNeurons;
+    extern int nx; //JACOBIAN
 	
 
 }

@@ -20,10 +20,10 @@ module extFGH
       real (c_double) :: x(*),rusr(*),ptcl(*)      
     end subroutine toxhat
 	
-	subroutine myfnn ( nx, x, fnn, jnn ) bind ( c )
+	subroutine myfnn ( nx, x, fnn, jnn ) bind ( c ) !JACOBIAN
       use iso_c_binding
       integer (c_int) :: nx
-      real (c_double) :: x(*),fnn(*),jnn(*)
+      real (c_double) :: x(*),fnn(*),jnn(*) !JACOBIAN
     end subroutine myfnn
 	
 	subroutine fromxhat ( x, ptcl, nx, rusr ) bind ( c )
@@ -58,7 +58,7 @@ program main
   integer :: nx=11,nf=11,nh=1 ! dimensions of x and f (h is for an ISAT functionality which is not used here)
   integer :: ns=10, info(100), nPtcl = 10000, idd, nSteps = 4000, counter, i1, i2
   ! ns is the number of species, nPtcl is the number of particles in the reactor, nSteps is the number of time steps
-  double precision, pointer    :: x(:), ptcl1(:), ptcl2(:), rusr(:), f(:), fisat(:), fisatsum(:), fnn(:), g(:,:), h(:), ptcls(:,:), alpha(:)
+  double precision, pointer    :: x(:), ptcl1(:), ptcl2(:), rusr(:), f(:), fisat(:), fisatsum(:), fnn(:), jnn(:,:), g(:,:), h(:), ptcls(:,:), alpha(:) !JACOBIAN
   double precision :: rinfo(70), stats(100), dt, start, finish
   
   double precision :: flowThroughTime, mixTime ! characteristic times which determine the rates at which particles are replaced and mixed
@@ -78,7 +78,7 @@ program main
 	nSteps = 4000
   end if ! for pre-processing we can use significantly less particles
 
-  allocate(need(3),need2(3),iusr(3),x(nx),ptcl1(nx),ptcl2(nx),rusr(2*nx+5),f(nx),fisat(nx),fisatsum(nx),fnn(nx),g(nx,nx),h(1),ptcls(nx+1,nPtcl),alpha(1))
+  allocate(need(3),need2(3),iusr(3),x(nx),ptcl1(nx),ptcl2(nx),rusr(2*nx+5),f(nx),fisat(nx),fisatsum(nx),fnn(nx),jnn(nx,nx),g(nx,nx),h(1),ptcls(nx+1,nPtcl),alpha(1)) !JACOBIAN
   
   iusr(1) = mode ! used to pass the code's behavior to the C++ routines (determines whether f^{MLP} is subtracted from f(x))
   
@@ -170,7 +170,7 @@ program main
 		end if ! call ISAT, if needed
 			
 		if ( (mode.eq.2).or.(mode.eq.4) ) then
-			call myfnn( nx, x, fnn )
+			call myfnn( nx, x, fnn, jnn) !JACOBIAN
 		end if ! call f^{MLP}, if needed
 		
 		if ( mode.gt.1 ) then ! if the code does storage retrieval

@@ -1,5 +1,19 @@
-#include "reactor.hpp"
+#include "reactor_.hpp"
+#include "custom_.hpp"
 #include <cmath>
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_context.h>
+#include <nvector/nvector_serial.h>
+#include <cvodes/cvodes.h>  // Use cvodes instead of cvode for sensitivity analysis
+#include <sunmatrix/sunmatrix_dense.h>
+#include <sunlinsol/sunlinsol_dense.h>
+#include <cassert>
+#include <iostream>
+
+#ifndef SUN_COMM_NULL
+#define SUN_COMM_NULL NULL
+#endif
+
 
 using namespace Cantera;
 
@@ -84,7 +98,7 @@ namespace Gl
 
 using namespace Gl;
 
-#include "custom.hpp"
+
 // "custom.hpp" is the ReactorODEs class from lines 21-147 of the file "custom.cpp" which can be found
 // at this URL: https://cantera.org/3.1/examples/cxx/custom.html (retrieved 06/05/2025)
 
@@ -128,10 +142,10 @@ double fAct(double x)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-double dfAct(double x)
-{
-    return tanh(log(1.0 + exp(x))) + x * (1.0 - tanh(log(1.0 + exp(x))) * tanh(log(1.0 + exp(x)))); // jacobian of actFun
-}
+double dfAct(double x) //JACOBIAN
+{ //JACOBIAN
+    return tanh(log(1.0 + exp(x))) + x * (1.0 - tanh(log(1.0 + exp(x))) * tanh(log(1.0 + exp(x)))); //JACOBIAN
+} //JACOBIAN
 ////////////////////////////////////////////////////////////////////////////////////////
 
 void myfnn(int &nx, double x[], double fnn[], double jnn[])
@@ -148,9 +162,9 @@ void myfnn(int &nx, double x[], double fnn[], double jnn[])
     double x2[100];         // work arrays
 
     ////////////////////////////////////////////
-    double jx[100];         // jacobian vector
-    double jac[100][100];   // jac matrix
-    double jtemp[100][100]; // temporary jac matrix
+    double jx[100]; //JACOBIAN
+    double jac[100][100]; //JACOBIAN
+    double jtemp[100][100]; //JACOBIAN
     ////////////////////////////////////////////
 
     if (bbbb != 7777)
@@ -161,13 +175,13 @@ void myfnn(int &nx, double x[], double fnn[], double jnn[])
       // f^{MLP} data structure by reading in the weights
 
     ////////////////////////////////////////////
-    for (int i = 0; i < nx; ++i)
-    {
-        for (int j = 0; j < nx; ++j)
-        {
-            jtemp[i][j] = (i == j) ? 1.0 : 0.0;
-        }
-    }
+    for (int i = 0; i < nx; ++i) //JACOBIAN
+    { //JACOBIAN
+        for (int j = 0; j < nx; ++j) //JACOBIAN
+        { //JACOBIAN
+            jtemp[i][j] = (i == j) ? 1.0 : 0.0; //JACOBIAN
+        } //JACOBIAN
+    } //JACOBIAN
     ////////////////////////////////////////////
 
     for (int ii = 0; ii < n1[0]; ii++)
@@ -191,24 +205,24 @@ void myfnn(int &nx, double x[], double fnn[], double jnn[])
             if (ll < nLayers - 1)
             {
                 ///////////////////////
-                jx[kk] = dfAct(x2[kk]); 
+                jx[kk] = dfAct(x2[kk]); //JACOBIAN
                 ///////////////////////
                 x2[kk] = fAct(x2[kk]);  // apply the activation function in the hidden layers
             }
         }
 
         ////////////////////////////////////////////////////////////
-        for (int i = 0; i < n2[ll]; ++i)
-        {
-            for (int j = 0; j < nx; ++j)
-            {
-                double sum = 0.0;
-                for (int k = 0; k < n1[ll]; ++k)
-                    sum += A[ia[ll] + k + i * n1[ll]] * jtemp[k][j];
-                jac[i][j] = (ll < nLayers - 1 ? jx[i] * sum : sum);
-                jtemp[i][j] = jac[i][j];
-            }
-        }
+        for (int i = 0; i < n2[ll]; ++i) //JACOBIAN
+        { //JACOBIAN
+            for (int j = 0; j < nx; ++j) //JACOBIAN
+            { //JACOBIAN
+                double sum = 0.0; //JACOBIAN
+                for (int k = 0; k < n1[ll]; ++k) //JACOBIAN
+                    sum += A[ia[ll] + k + i * n1[ll]] * jtemp[k][j]; //JACOBIAN
+                jac[i][j] = (ll < nLayers - 1 ? jx[i] * sum : sum); //JACOBIAN
+                jtemp[i][j] = jac[i][j]; //JACOBIAN
+            } //JACOBIAN
+        } //JACOBIAN
         ////////////////////////////////////////////////////////////
 
         for (int kk = 0; kk < n2[ll]; kk++)
@@ -222,13 +236,22 @@ void myfnn(int &nx, double x[], double fnn[], double jnn[])
         fnn[kk] = 1.0 * (x2[kk]);
 
         //////////////////////////////////////
-        for (int jj = 0; jj < nx; ++jj)
-        {
-            jnn[kk * nx + jj] = jtemp[kk][jj];
-        }
+        for (int jj = 0; jj < nx; ++jj) //JACOBIAN
+        { //JACOBIAN
+            jnn[kk * nx + jj] = jtemp[kk][jj]; //JACOBIAN
+        } //JACOBIAN
         //////////////////////////////////////
     } 
 }
+
+static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) //JACOBIAN
+{ //JACOBIAN
+    ReactorODEs *odes = static_cast<ReactorODEs *>(user_data); //JACOBIAN
+    double *y_data = NV_DATA_S(y); //JACOBIAN
+    double *yd_data = NV_DATA_S(ydot); //JACOBIAN
+    odes->eval((double)t, y_data, yd_data, nullptr); //JACOBIAN
+    return 0; //JACOBIAN
+} //JACOBIAN
 
 // myfgh is the function passed to ISAT
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
@@ -246,10 +269,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double p = rusr[2 * nx + 4];  // user-specified pressure
     int mode = iusr[0];
     double fnn[nx]; // f^{MLP}
-
-    ///////////////
-    double jnn[nx]; // JACOBIAN
-    ///////////////
+    std::vector<double> jnn(nx * nx, 0.0); //JACOBIAN
 
     //sensitivity stuff
     double tnow = 0.0;
@@ -292,6 +312,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     // toxhat(solution, f, nx, rusr); // normalize the gas properties
 
+    //JACOBIAN
+    //JACOBIAN
+    //JACOBIAN
+    //JACOBIAN
+    //JACOBIAN
     ////////////////////////////////////////////////////////////////////////////////////////////
     gas->setState_TPY(T[0], p, Y);
     ReactorODEs odes = ReactorODEs(sol);
@@ -379,7 +404,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     if (mode == 2)
     {
-        myfnn(nx, x, fnn, jnn); // evaluate f^{MLP}
+        myfnn(nx, x, fnn, jnn.data()); // evaluate f^{MLP}
 
         for (int ii = 0; ii < nx; ii++)
         {
@@ -407,7 +432,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             double *Sj = NV_DATA_S(yS[j]);
             for (int i = 0; i < (int)NEQ; ++i)
             {
-                g[i + j * nx] = Sj[i] + jnn[i + j * nx]; //ODE jac + NN jac
+                double jnn_current = (mode == 2) ? jnn[i + j * nx] : 0.0;
+                g[i + j * nx] = Sj[i] + jnn_current; //ODE jac + NN jac
             }
         }
     }
@@ -421,6 +447,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     SUNLinSolFree(LS);
     SUNContext_Free(&sunctx);
     ////////////////////////////////////////////////////////////////////////////////////////////
+    //JACOBIAN
+    //JACOBIAN
+    //JACOBIAN
+    //JACOBIAN
+    //JACOBIAN
+
 
     // if (mode == 2)
     // {

@@ -115,6 +115,17 @@ public:
         m_gas->getMassFractions(&y[1]);
     }
 
+    size_t nSpecies() const //JACOBIAN
+    { //JACOBIAN
+        return m_nSpecies; //JACOBIAN
+    } //JACOBIAN
+    //JACOBIAN
+
+    const std::vector<std::string> &speciesNames() const //JACOBIAN
+    { //JACOBIAN
+        return m_gas->speciesNames(); //JACOBIAN
+    } //JACOBIAN
+
 private:
     // private member variables, to be used internally.
     shared_ptr<ThermoPhase> m_gas;
