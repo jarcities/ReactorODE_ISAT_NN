@@ -276,14 +276,23 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double t = tnow;
     const double tfinal = dt;
 
-    static int aaaa; // if "myfgh" is called for the first time, initialize the
-                     // myfgh data structure by creating the Cantera solution object
+    static int aaaa;
+    int flag;
+    static SUNContext sunctx;
+    static bool cvodes_init = false;
 
     if (aaaa != 7777)
     {
         Gl::initfgh();
         aaaa = 7777;
     } // initialize "myfgh" on the first call
+
+    if (!cvodes_init)
+    {
+        flag = SUNContext_Create(SUN_COMM_NULL, &sunctx);
+        assert(flag == 0);
+        cvodes_init = true;
+    }
 
     fromxhat(x, ptcl, nx, rusr); // convert from normalized x to particle properties
 
@@ -325,8 +334,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // const auto &names = odes.speciesNames();
 
     //CVODE sens stuff
-    SUNContext sunctx;
-    int flag = SUNContext_Create(SUN_COMM_NULL, &sunctx);
     N_Vector y = N_VNew_Serial(NEQ, sunctx);
     assert(y);
     double *y_data = NV_DATA_S(y);
@@ -396,7 +403,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         CVodeFree(&m_cvode_mem);
         SUNMatDestroy(A);
         SUNLinSolFree(LS);
-        SUNContext_Free(&sunctx);
         return;
     }
 
@@ -445,7 +451,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     CVodeFree(&m_cvode_mem);
     SUNMatDestroy(A);
     SUNLinSolFree(LS);
-    SUNContext_Free(&sunctx);
     ////////////////////////////////////////////////////////////////////////////////////////////
     //JACOBIAN
     //JACOBIAN
