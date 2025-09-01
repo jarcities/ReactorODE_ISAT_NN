@@ -148,12 +148,8 @@ double dfAct(double x) //JACOBIAN
 } //JACOBIAN
 ////////////////////////////////////////////////////////////////////////////////////////
 
-void myfnn(int &nx, double x[], double fnn[], double jnn[])
+void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[])
 {
-    #ifdef USE_JNN
-    //implement flag later
-    #endif
-
     // this function evaluates f^{}
 
     static int bbbb; // dummy variable used to call "initfnn" the first time "myfnn" is called
@@ -175,13 +171,16 @@ void myfnn(int &nx, double x[], double fnn[], double jnn[])
       // f^{MLP} data structure by reading in the weights
 
     ////////////////////////////////////////////
-    for (int i = 0; i < nx; ++i) //JACOBIAN
-    { //JACOBIAN
-        for (int j = 0; j < nx; ++j) //JACOBIAN
+    if (need[1] == 1)
+    {
+        for (int i = 0; i < nx; ++i) //JACOBIAN
         { //JACOBIAN
-            jtemp[i][j] = (i == j) ? 1.0 : 0.0; //JACOBIAN
+            for (int j = 0; j < nx; ++j) //JACOBIAN
+            { //JACOBIAN
+                jtemp[i][j] = (i == j) ? 1.0 : 0.0; //JACOBIAN
+            } //JACOBIAN
         } //JACOBIAN
-    } //JACOBIAN
+    }
     ////////////////////////////////////////////
 
     for (int ii = 0; ii < n1[0]; ii++)
@@ -205,24 +204,30 @@ void myfnn(int &nx, double x[], double fnn[], double jnn[])
             if (ll < nLayers - 1)
             {
                 ///////////////////////
-                jx[kk] = dfAct(x2[kk]); //JACOBIAN
+                if (need[1] == 1)
+                {
+                    jx[kk] = dfAct(x2[kk]); //JACOBIAN
+                }   
                 ///////////////////////
                 x2[kk] = fAct(x2[kk]);  // apply the activation function in the hidden layers
             }
         }
 
         ////////////////////////////////////////////////////////////
-        for (int i = 0; i < n2[ll]; ++i) //JACOBIAN
-        { //JACOBIAN
-            for (int j = 0; j < nx; ++j) //JACOBIAN
+        if (need[1] == 1)
+        {
+            for (int i = 0; i < n2[ll]; ++i) //JACOBIAN
             { //JACOBIAN
-                double sum = 0.0; //JACOBIAN
-                for (int k = 0; k < n1[ll]; ++k) //JACOBIAN
-                    sum += A[ia[ll] + k + i * n1[ll]] * jtemp[k][j]; //JACOBIAN
-                jac[i][j] = (ll < nLayers - 1 ? jx[i] * sum : sum); //JACOBIAN
-                jtemp[i][j] = jac[i][j]; //JACOBIAN
+                for (int j = 0; j < nx; ++j) //JACOBIAN
+                { //JACOBIAN
+                    double sum = 0.0; //JACOBIAN
+                    for (int k = 0; k < n1[ll]; ++k) //JACOBIAN
+                        sum += A[ia[ll] + k + i * n1[ll]] * jtemp[k][j]; //JACOBIAN
+                    jac[i][j] = (ll < nLayers - 1 ? jx[i] * sum : sum); //JACOBIAN
+                    jtemp[i][j] = jac[i][j]; //JACOBIAN
+                } //JACOBIAN
             } //JACOBIAN
-        } //JACOBIAN
+        }
         ////////////////////////////////////////////////////////////
 
         for (int kk = 0; kk < n2[ll]; kk++)
@@ -236,10 +241,13 @@ void myfnn(int &nx, double x[], double fnn[], double jnn[])
         fnn[kk] = 1.0 * (x2[kk]);
 
         //////////////////////////////////////
-        for (int jj = 0; jj < nx; ++jj) //JACOBIAN
-        { //JACOBIAN
-            jnn[kk * nx + jj] = jtemp[kk][jj]; //JACOBIAN
-        } //JACOBIAN
+        if (need[1] == 1)
+        {
+            for (int jj = 0; jj < nx; ++jj) //JACOBIAN
+            { //JACOBIAN
+                jnn[kk * nx + jj] = jtemp[kk][jj]; //JACOBIAN
+            } //JACOBIAN
+        }
         //////////////////////////////////////
     } 
 }
@@ -262,14 +270,14 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];                  // temperature
     double ptcl[nx];              // particle properties
     double *solution;             // Cantera solution object
-    double aTol = 1e-8;           // rusr[2*nx];
-    double rTol = 1e-8;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
+    double aTol = rusr[2*nx];        // rusr[2*nx];
+    double rTol = rusr[2*nx+1];          // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     double dx = rusr[2 * nx + 3]; // spatial increment in x for Jacobian evaluation
     double p = rusr[2 * nx + 4];  // user-specified pressure
     int mode = iusr[0];
     double fnn[nx]; // f^{MLP}
-    std::vector<double> jnn(nx * nx, 0.0); //JACOBIAN
+    static std::vector<double> jnn(nx * nx, 0.0); //JACOBIAN
 
     //sensitivity stuff
     double tnow = 0.0;
@@ -278,8 +286,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     static int aaaa;
     int flag;
-    static SUNContext sunctx;
-    static bool cvodes_init = false;
+    static SUNContext sunctx; //JACOBIAN
+    static bool cvodes_init = false; //JACOBIAN
 
     if (aaaa != 7777)
     {
@@ -361,10 +369,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     //JACOBIAN START
     N_Vector *yS = nullptr;
-    // int Ns = 0;
-    int Ns = (int)NEQ; 
+    int Ns = 0; 
     if (need[1] == 1)
     {
+        int Ns = (int)NEQ;
         //setup sensitivity analysis
         yS = N_VCloneVectorArray(Ns, y);
         assert(yS);
@@ -380,8 +388,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         assert(flag >= 0);
         flag = CVodeSensEEtolerances(m_cvode_mem);
         assert(flag >= 0);
-        vector<sunrealtype> p(NEQ);
-        vector<sunrealtype> pbar(NEQ);
+        static vector<sunrealtype> p(NEQ);
+        static vector<sunrealtype> pbar(NEQ);
         for (int i = 0; i < NEQ; i++)
         {
             p[i] = y_data[i];                                            
@@ -410,7 +418,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     if (mode == 2)
     {
-        myfnn(nx, x, fnn, jnn.data()); // evaluate f^{MLP}
+        myfnn(need, nx, x, fnn, jnn.data()); // evaluate f^{MLP}
 
         for (int ii = 0; ii < nx; ii++)
         {

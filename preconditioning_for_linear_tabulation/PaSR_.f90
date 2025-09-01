@@ -20,9 +20,9 @@ module extFGH
       real (c_double) :: x(*),rusr(*),ptcl(*)      
     end subroutine toxhat
 	
-	subroutine myfnn ( nx, x, fnn, jnn ) bind ( c ) !JACOBIAN
+	subroutine myfnn ( need, nx, x, fnn, jnn ) bind ( c ) !JACOBIAN
       use iso_c_binding
-      integer (c_int) :: nx
+      integer (c_int) :: need(*), nx
       real (c_double) :: x(*),fnn(*),jnn(*) !JACOBIAN
     end subroutine myfnn
 	
@@ -170,7 +170,7 @@ program main
 		end if ! call ISAT, if needed
 			
 		if ( (mode.eq.2).or.(mode.eq.4) ) then
-			call myfnn( nx, x, fnn, jnn) !JACOBIAN
+			call myfnn( need, nx, x, fnn, jnn) !JACOBIAN
 		end if ! call f^{MLP}, if needed
 		
 		if ( mode.gt.1 ) then ! if the code does storage retrieval

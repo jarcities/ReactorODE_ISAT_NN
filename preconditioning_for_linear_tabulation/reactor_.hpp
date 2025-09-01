@@ -10,7 +10,7 @@ extern "C"
   
   void toxhat(double x[], double ptcl[], int &nx, double rusr[] );
   
-  void myfnn(int &nx, double x[], double fnn[], double jnn[]); //JACOBIAN
+  void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[]); //JACOBIAN
   
   void fromxhat(double ptcl[], double x[], int &nx, double rusr[] );
 } //fortran90/C interface
