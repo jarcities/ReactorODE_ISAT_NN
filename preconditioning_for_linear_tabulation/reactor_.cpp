@@ -142,10 +142,16 @@ double fAct(double x)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-double dfAct(double x) //JACOBIAN
-{ //JACOBIAN
-    return tanh(log(1.0 + exp(x))) + x * (1.0 - tanh(log(1.0 + exp(x))) * tanh(log(1.0 + exp(x)))); //JACOBIAN
-} //JACOBIAN
+double dfAct(double x)
+{
+    // Mish(x) = x * tanh(softplus(x)),  softplus = log1p(exp(x))
+    double s = log1p(exp(x));
+    double t = tanh(s);
+    double sech2 = 1.0 - t*t;
+    double sig = 1.0 / (1.0 + exp(-x)); // d softplus / dx
+    return t + x * sech2 * sig;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 
 void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[])
@@ -243,10 +249,10 @@ void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[])
         //////////////////////////////////////
         if (need[1] == 1)
         {
-            for (int jj = 0; jj < nx; ++jj) //JACOBIAN
-            { //JACOBIAN
-                jnn[kk * nx + jj] = jtemp[kk][jj]; //JACOBIAN
-            } //JACOBIAN
+            for (int jj = 0; jj < nx; ++jj) // JACOBIAN
+            {
+                jnn[jj * nx + kk] = jtemp[kk][jj]; // store J_nn(i=kk, j=jj) at [i + j*nx]
+            }
         }
         //////////////////////////////////////
     } 
@@ -338,6 +344,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     gas->setState_TPY(T[0], p, Y);
     ReactorODEs odes = ReactorODEs(sol);
     size_t NEQ = odes.neq();
+    assert((int)NEQ == nx && "Mismatch between reactor state size and normalized vector size");
     // size_t Nsp = odes.nSpecies();
     // const auto &names = odes.speciesNames();
 
@@ -372,7 +379,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     int Ns = 0; 
     if (need[1] == 1)
     {
-        int Ns = (int)NEQ;
+        Ns = (int)NEQ;
         //setup sensitivity analysis
         yS = N_VCloneVectorArray(Ns, y);
         assert(yS);
@@ -384,7 +391,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
         //forward sens
-        flag = CVodeSensInit(m_cvode_mem, Ns, CV_STAGGERED, /*fS*/ nullptr, yS); //line 235 cpp
+        flag = CVodeSensInit(m_cvode_mem, Ns, CV_STAGGERED, /*fS*/ nullptr, yS);
+        assert(flag >= 0);
+        flag = CVodeSetSensErrCon(m_cvode_mem, SUNTRUE);
         assert(flag >= 0);
         flag = CVodeSensEEtolerances(m_cvode_mem);
         assert(flag >= 0);
@@ -437,17 +446,44 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //JACOBIAN START
     if (need[1] == 1)
     {
-        //get final sens into jac matrix
+        // 1) Pull S_y(tf) = ∂y(tf)/∂y0 from CVODES
         flag = CVodeGetSens(m_cvode_mem, &t, yS);
         assert(flag >= 0);
 
-        for (int j = 0; j < (int)NEQ; ++j)
-        {
-            double *Sj = NV_DATA_S(yS[j]);
-            for (int i = 0; i < (int)NEQ; ++i)
-            {
-                double jnn_current = (mode == 2) ? jnn[i + j * nx] : 0.0;
-                g[i + j * nx] = Sj[i] + jnn_current; //ODE jac + NN jac
+        // 2) Build diagonal Jacobians for normalization maps
+        //    J_to_tf   = ∂x̂/∂y evaluated at y(tf)
+        //    J_from_0  = ∂y0/∂x̂0 evaluated at the initial x̂0
+        std::vector<double> J_to_tf(nx), J_from_0(nx);
+
+        // at final state y(tf)
+        double* y_final = NV_DATA_S(y);
+        J_to_tf[0] = 1.0 / rusr[nx]; // dx̂_T/dT
+        for (int i = 1; i < nx; ++i) {
+            double ri = rusr[i];
+            // x̂_i = -log((Y_i + ri)/ri) / log(ri)  =>  ∂x̂_i/∂Y_i = -1 / ( log(ri) * (Y_i + ri) )
+            J_to_tf[i] = -1.0 / (std::log(ri) * (y_final[i] + ri));
+        }
+
+        // at initial state x̂0 (use x[] you already have)
+        J_from_0[0] = rusr[nx]; // ∂T0/∂x̂_T0
+        for (int j = 1; j < nx; ++j) {
+            double ri = rusr[j];
+            // fromxhat: Y0_j + ri = ri * exp(-log(ri) * x[j])
+            double y0_plus = ri * std::exp(-std::log(ri) * x[j]);
+            // ∂Y0_j/∂x̂_j0 = -(Y0_j + ri) * log(ri)
+            J_from_0[j] = - y0_plus * std::log(ri);
+        }
+
+        // 3) Assemble S_xhat = J_to_tf * S_y * J_from_0
+        //    and form residual Jacobian:
+        //    g = S_xhat - I          (mode != 2)
+        //    g = S_xhat - I - J_nn   (mode == 2)
+        for (int j = 0; j < (int)NEQ; ++j) {           // column j
+            double* Sj = NV_DATA_S(yS[j]);             // S_y(:,j)
+            for (int i = 0; i < (int)NEQ; ++i) {       // row i
+                double Sxhat_ij = J_to_tf[i] * Sj[i] * J_from_0[j];
+                double nn_ij = (mode == 2) ? jnn[i + j*nx] : 0.0;  // after fixing write-side indexing (see section 2)
+                g[i + j*nx] = Sxhat_ij - (i == j ? 1.0 : 0.0) - nn_ij;
             }
         }
     }
@@ -613,7 +649,7 @@ void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], 
         Y2[ii] -= alpha[0] * d; // mix mass fractions
     }
 
-    d = alpha[0] * (T2 - T1);
+    d = alpha[0] * (T2[0] - T1[0]);
 
     gas->setState_TPY(T1[0] + d, p, Y1);
     gas->setState_HP(H1, p);
