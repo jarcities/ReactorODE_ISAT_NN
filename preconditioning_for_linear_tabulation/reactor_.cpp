@@ -270,13 +270,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];                  // temperature
     double ptcl[nx];              // particle properties
     double *solution;             // Cantera solution object
-    double aTol = rusr[2*nx];        // rusr[2*nx];
-    double rTol = rusr[2*nx+1];          // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
+    double aTol = 1e-8;        // rusr[2*nx];
+    double rTol = 1e-8;          // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     double dx = rusr[2 * nx + 3]; // spatial increment in x for Jacobian evaluation
     double p = rusr[2 * nx + 4];  // user-specified pressure
     int mode = iusr[0];
-    double fnn[nx]; // f^{MLP}
+    double fnn[nx]; 
     static std::vector<double> jnn(nx * nx, 0.0); //JACOBIAN
 
     //sensitivity stuff
