@@ -367,7 +367,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE (sensitivity does not control integrator)
         assert(flag >= 0);
-        flag = CVodeSensEEtolerances(m_cvode_mem, double(1e-5), double(1e-5)); //1e-8, 1e-8 original
+        flag = CVodeSensSStolerances(m_cvode_mem, double(1e-5), double(1e-5)); //1e-8, 1e-8 original
         // flag = CVodeSensEEtolerances(m_cvode_mem);
         assert(flag >= 0);
         std::vector<sunrealtype> p(Ns, 0.0);
