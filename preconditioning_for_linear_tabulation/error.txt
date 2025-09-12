@@ -1,0 +1,12 @@
+(intel_cantera) [jsampayan4914@gpu004 preconditioning_for_linear_tabulation]$ ./build.sh 
+rm: cannot remove '*.o': No such file or directory
+reactor_.cpp:370:16: error: no matching function for call to 'CVodeSensSStolerances'
+  370 |         flag = CVodeSensSStolerances(m_cvode_mem, double(1e-5), double(1e-5)); //1e-8, 1e-8 original
+      |                ^~~~~~~~~~~~~~~~~~~~~
+/home/jsampayan4914/miniconda3/envs/intel_cantera/include/cvodes/cvodes.h:364:21: note: candidate function not viable: no known conversion from 'double' to 'sunrealtype *' (aka 'double *') for 3rd argument
+  364 | SUNDIALS_EXPORT int CVodeSensSStolerances(void* cvode_mem, sunrealtype reltolS,
+      |                     ^
+  365 |                                           sunrealtype* abstolS);
+      |                                           ~~~~~~~~~~~~~~~~~~~~
+1 error generated.
+ifx: error #10236: File not found: 'reactor_.o'
