@@ -1,0 +1,23 @@
+r sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+integration failed -> -22
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifa
