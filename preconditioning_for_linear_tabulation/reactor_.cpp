@@ -362,11 +362,15 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
         //forward sens
-        flag = CVodeSensInit(m_cvode_mem, Ns, CV_STAGGERED, /*fS*/ nullptr, yS);
+        flag = CVodeSensInit(m_cvode_mem, Ns, CV_SIMULTANEOUS, /*fS*/ nullptr, yS); //CV_STAGGERED
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNTRUE);
         assert(flag >= 0);
         flag = CVodeSensEEtolerances(m_cvode_mem);
+        assert(flag >= 0);
+        std::vector<sunrealtype> p(Ns, 0.0);
+        std::vector<sunrealtype> pbar(Ns, 1.0);
+        flag = CVodeSetSensParams(m_cvode_mem, p.data(), pbar.data(), nullptr);
         assert(flag >= 0);
     }
 
