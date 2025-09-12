@@ -331,6 +331,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     flag = CVodeInit(m_cvode_mem, RHS, tnow, y);
     assert(flag >= 0);
     flag = CVodeSStolerances(m_cvode_mem, rTol, aTol);
+    CVodeSetSensDQMethod(m_cvode_mem, CV_FORWARD, 1e-5); //CV_CENTERED or CV_FORWARD
     assert(flag >= 0);
     flag = CVodeSetUserData(m_cvode_mem, &odes);
     assert(flag >= 0);
@@ -364,9 +365,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         //forward sens
         flag = CVodeSensInit(m_cvode_mem, Ns, CV_STAGGERED, /*fS*/ nullptr, yS); //CV_STAGGERED or CV_SIMULTANEOUS
         assert(flag >= 0);
-        flag = CVodeSetSensErrCon(m_cvode_mem, SUNTRUE);
+        flag = CVodeSetSensErrCon(m_cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE (sensitivity does not control integrator)
         assert(flag >= 0);
-        flag = CVodeSensEEtolerances(m_cvode_mem);
+        flag = CVodeSensEEtolerances(m_cvode_mem, 1e-5, 1e-5); //1e-8, 1e-8 original
+        // flag = CVodeSensEEtolerances(m_cvode_mem);
         assert(flag >= 0);
         std::vector<sunrealtype> p(Ns, 0.0);
         std::vector<sunrealtype> pbar(Ns, 1.0);
