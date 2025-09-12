@@ -362,7 +362,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
         //forward sens
-        flag = CVodeSensInit(m_cvode_mem, Ns, CV_SIMULTANEOUS, /*fS*/ nullptr, yS); //CV_STAGGERED
+        flag = CVodeSensInit(m_cvode_mem, Ns, CV_STAGGERED, /*fS*/ nullptr, yS); //CV_STAGGERED or CV_SIMULTANEOUS
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNTRUE);
         assert(flag >= 0);
