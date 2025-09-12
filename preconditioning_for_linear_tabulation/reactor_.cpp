@@ -9,6 +9,7 @@
 #include <sunlinsol/sunlinsol_dense.h>
 #include <cassert>
 #include <iostream>
+#include <vector>
 
 #ifndef SUN_COMM_NULL
 #define SUN_COMM_NULL NULL
@@ -164,28 +165,28 @@ void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[])
     double x2[100];         // work arrays
 
     ////////////////////////////////////////////
-    double jx[100]; //JACOBIAN
-    double jac[100][100]; //JACOBIAN
-    double jtemp[100][100]; //JACOBIAN
+    double jx[100]; 
+    double jac[100][100]; 
+    double jtemp[100][100]; 
     ////////////////////////////////////////////
 
     if (bbbb != 7777)
     {
         Gl::initfnn();
         bbbb = 7777;
-    } // if "myfnn" is called for the first time, initialize the
-      // f^{MLP} data structure by reading in the weights
+    } 
+      
 
     ////////////////////////////////////////////
     if (need[1] == 1)
     {
-        for (int i = 0; i < nx; ++i) //JACOBIAN
-        { //JACOBIAN
-            for (int j = 0; j < nx; ++j) //JACOBIAN
-            { //JACOBIAN
-                jtemp[i][j] = (i == j) ? 1.0 : 0.0; //JACOBIAN
-            } //JACOBIAN
-        } //JACOBIAN
+        for (int i = 0; i < nx; ++i) 
+        { 
+            for (int j = 0; j < nx; ++j) 
+            { 
+                jtemp[i][j] = (i == j) ? 1.0 : 0.0; 
+            } 
+        } 
     }
     ////////////////////////////////////////////
 
@@ -212,7 +213,7 @@ void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[])
                 ///////////////////////
                 if (need[1] == 1)
                 {
-                    jx[kk] = dfAct(x2[kk]); //JACOBIAN
+                    jx[kk] = dfAct(x2[kk]); 
                 }   
                 ///////////////////////
                 x2[kk] = fAct(x2[kk]);  // apply the activation function in the hidden layers
@@ -222,17 +223,17 @@ void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[])
         ////////////////////////////////////////////////////////////
         if (need[1] == 1)
         {
-            for (int i = 0; i < n2[ll]; ++i) //JACOBIAN
-            { //JACOBIAN
-                for (int j = 0; j < nx; ++j) //JACOBIAN
-                { //JACOBIAN
-                    double sum = 0.0; //JACOBIAN
-                    for (int k = 0; k < n1[ll]; ++k) //JACOBIAN
-                        sum += A[ia[ll] + k + i * n1[ll]] * jtemp[k][j]; //JACOBIAN
-                    jac[i][j] = (ll < nLayers - 1 ? jx[i] * sum : sum); //JACOBIAN
-                    jtemp[i][j] = jac[i][j]; //JACOBIAN
-                } //JACOBIAN
-            } //JACOBIAN
+            for (int i = 0; i < n2[ll]; ++i) 
+            { 
+                for (int j = 0; j < nx; ++j) 
+                { 
+                    double sum = 0.0; 
+                    for (int k = 0; k < n1[ll]; ++k) 
+                        sum += A[ia[ll] + k + i * n1[ll]] * jtemp[k][j]; 
+                    jac[i][j] = (ll < nLayers - 1 ? jx[i] * sum : sum); 
+                    jtemp[i][j] = jac[i][j]; 
+                } 
+            } 
         }
         ////////////////////////////////////////////////////////////
 
@@ -249,25 +250,24 @@ void myfnn(int need[], int &nx, double x[], double fnn[], double jnn[])
         //////////////////////////////////////
         if (need[1] == 1)
         {
-            for (int jj = 0; jj < nx; ++jj) // JACOBIAN
+            for (int jj = 0; jj < nx; ++jj) 
             {
-                jnn[jj * nx + kk] = jtemp[kk][jj]; // store J_nn(i=kk, j=jj) at [i + j*nx]
+                jnn[jj * nx + kk] = jtemp[kk][jj];
             }
         }
         //////////////////////////////////////
     } 
 }
 
-static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) //JACOBIAN
-{ //JACOBIAN
-    ReactorODEs *odes = static_cast<ReactorODEs *>(user_data); //JACOBIAN
-    double *y_data = NV_DATA_S(y); //JACOBIAN
-    double *yd_data = NV_DATA_S(ydot); //JACOBIAN
-    odes->eval((double)t, y_data, yd_data, nullptr); //JACOBIAN
-    return 0; //JACOBIAN
-} //JACOBIAN
+static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    ReactorODEs *odes = static_cast<ReactorODEs *>(user_data);
+    double *y_data = NV_DATA_S(y); 
+    double *yd_data = NV_DATA_S(ydot);
+    odes->eval((double)t, y_data, yd_data, nullptr);
+    return 0; 
+} 
 
-// myfgh is the function passed to ISAT
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
@@ -276,14 +276,14 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];                  // temperature
     double ptcl[nx];              // particle properties
     double *solution;             // Cantera solution object
-    double aTol = 1e-8;        // rusr[2*nx];
-    double rTol = 1e-8;          // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
+    double aTol = 1e-8;           // rusr[2*nx];
+    double rTol = 1e-8;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     double dx = rusr[2 * nx + 3]; // spatial increment in x for Jacobian evaluation
     double p = rusr[2 * nx + 4];  // user-specified pressure
     int mode = iusr[0];
     double fnn[nx]; 
-    static std::vector<double> jnn(nx * nx, 0.0); //JACOBIAN
+    static std::vector<double> jnn(nx * nx, 0.0); 
 
     //sensitivity stuff
     double tnow = 0.0;
@@ -292,14 +292,14 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     static int aaaa;
     int flag;
-    static SUNContext sunctx; //JACOBIAN
-    static bool cvodes_init = false; //JACOBIAN
+    static SUNContext sunctx; 
+    static bool cvodes_init = false; 
 
     if (aaaa != 7777)
     {
         Gl::initfgh();
         aaaa = 7777;
-    } // initialize "myfgh" on the first call
+    } 
 
     if (!cvodes_init)
     {
@@ -308,52 +308,25 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         cvodes_init = true;
     }
 
-    fromxhat(x, ptcl, nx, rusr); // convert from normalized x to particle properties
+    fromxhat(x, ptcl, nx, rusr); 
 
     T[0] = ptcl[0];
     for (int ii = 1; ii < nx; ii++)
     {
         Y[ii - 1] = ptcl[ii];
-    } // extract temperature and mass fractions
+    } 
 
-    // gas->setState_TPY(T[0], p, Y); // set the gas state, using the particle's temperature and mass fractions,
-    // // and the user-specified pressure
-
-    // ReactorODEs odes = ReactorODEs(sol); // create the ODE RHS evaluator
-
-    // double tnow = 0.0; // initialize time
-
-    // shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // create a CVODE integrator of the ODE
-
-    // integrator->initialize(tnow, odes); // initialize the integrator
-
-    // integrator->setTolerances(aTol, rTol); // set ODE integration tolerances
-
-    // integrator->integrate(dt); // integrate the chemical composition from time 0 to time dt
-
-    // solution = integrator->solution(); // extract the new gas properties
-
-    // toxhat(solution, f, nx, rusr); // normalize the gas properties
-
-    //JACOBIAN
-    //JACOBIAN
-    //JACOBIAN
-    //JACOBIAN
-    //JACOBIAN
-    ////////////////////////////////////////////////////////////////////////////////////////////
     gas->setState_TPY(T[0], p, Y);
     ReactorODEs odes = ReactorODEs(sol);
     size_t NEQ = odes.neq();
     assert((int)NEQ == nx && "Mismatch between reactor state size and normalized vector size");
-    // size_t Nsp = odes.nSpecies();
-    // const auto &names = odes.speciesNames();
 
-    //CVODE sens stuff
+    //CVODES setup
     N_Vector y = N_VNew_Serial(NEQ, sunctx);
     assert(y);
     double *y_data = NV_DATA_S(y);
     odes.getState(y_data);
-    void *m_cvode_mem = CVodeCreate(CV_BDF, sunctx); //line 287 cpp, line 98 header file
+    void *m_cvode_mem = CVodeCreate(CV_BDF, sunctx); 
     assert(m_cvode_mem);
     flag = CVodeInit(m_cvode_mem, RHS, tnow, y);
     assert(flag >= 0);
@@ -363,8 +336,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
     assert(flag >= 0);
-    // flag = CVodeSetInitStep(m_cvode_mem, 1e-8); //set intial step size
-    // assert(flag >= 0);
     flag = CVodeSetMaxStep(m_cvode_mem, dt); //1e-6 original
     assert(flag >= 0);
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
@@ -374,7 +345,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     flag = CVodeSetLinearSolver(m_cvode_mem, LS, A);
     assert(flag >= 0);
 
-    //JACOBIAN START
+    //jacobian
     N_Vector *yS = nullptr;
     int Ns = 0; 
     if (need[1] == 1)
@@ -397,20 +368,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         assert(flag >= 0);
         flag = CVodeSensEEtolerances(m_cvode_mem);
         assert(flag >= 0);
-        static vector<sunrealtype> p(NEQ);
-        static vector<sunrealtype> pbar(NEQ);
-        for (int i = 0; i < NEQ; i++)
-        {
-            p[i] = y_data[i];                                            
-            pbar[i] = (fabs(y_data[i]) > 1e-12) ? fabs(y_data[i]) : 1.0; 
-        }
-        //set sens parameters
-        flag = CVodeSetSensParams(m_cvode_mem, p.data(), pbar.data(), nullptr);    
-        assert(flag >= 0);
     }
-    //JACOBIAN END
 
-    //INTEGRATE
+    //integrate
     flag = CVode(m_cvode_mem, tfinal, y, &t, CV_NORMAL);
     if (flag < 0)
     {
@@ -427,14 +387,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     if (mode == 2)
     {
-        myfnn(need, nx, x, fnn, jnn.data()); // evaluate f^{MLP}
+        myfnn(need, nx, x, fnn, jnn.data()); 
 
         for (int ii = 0; ii < nx; ii++)
         {
             f[ii] = f[ii] - x[ii] - fnn[ii];
         }
     }
-    // f(x) is the increment of x minus f^{MLP}(x)
     else
     {
         for (int ii = 0; ii < nx; ii++)
@@ -443,51 +402,36 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         }
     }
 
-    //JACOBIAN START
+    //jacobian
     if (need[1] == 1)
     {
-        // 1) Pull S_y(tf) = ∂y(tf)/∂y0 from CVODES
         flag = CVodeGetSens(m_cvode_mem, &t, yS);
         assert(flag >= 0);
-
-        // 2) Build diagonal Jacobians for normalization maps
-        //    J_to_tf   = ∂x̂/∂y evaluated at y(tf)
-        //    J_from_0  = ∂y0/∂x̂0 evaluated at the initial x̂0
         std::vector<double> J_to_tf(nx), J_from_0(nx);
 
-        // at final state y(tf)
         double* y_final = NV_DATA_S(y);
-        J_to_tf[0] = 1.0 / rusr[nx]; // dx̂_T/dT
+        J_to_tf[0] = 1.0 / rusr[nx]; 
         for (int i = 1; i < nx; ++i) {
             double ri = rusr[i];
-            // x̂_i = -log((Y_i + ri)/ri) / log(ri)  =>  ∂x̂_i/∂Y_i = -1 / ( log(ri) * (Y_i + ri) )
             J_to_tf[i] = -1.0 / (std::log(ri) * (y_final[i] + ri));
         }
 
-        // at initial state x̂0 (use x[] you already have)
-        J_from_0[0] = rusr[nx]; // ∂T0/∂x̂_T0
+        J_from_0[0] = rusr[nx]; 
         for (int j = 1; j < nx; ++j) {
             double ri = rusr[j];
-            // fromxhat: Y0_j + ri = ri * exp(-log(ri) * x[j])
             double y0_plus = ri * std::exp(-std::log(ri) * x[j]);
-            // ∂Y0_j/∂x̂_j0 = -(Y0_j + ri) * log(ri)
             J_from_0[j] = - y0_plus * std::log(ri);
         }
 
-        // 3) Assemble S_xhat = J_to_tf * S_y * J_from_0
-        //    and form residual Jacobian:
-        //    g = S_xhat - I          (mode != 2)
-        //    g = S_xhat - I - J_nn   (mode == 2)
-        for (int j = 0; j < (int)NEQ; ++j) {           // column j
-            double* Sj = NV_DATA_S(yS[j]);             // S_y(:,j)
-            for (int i = 0; i < (int)NEQ; ++i) {       // row i
+        for (int j = 0; j < (int)NEQ; ++j) {           
+            double* Sj = NV_DATA_S(yS[j]);             
+            for (int i = 0; i < (int)NEQ; ++i) {      
                 double Sxhat_ij = J_to_tf[i] * Sj[i] * J_from_0[j];
-                double nn_ij = (mode == 2) ? jnn[i + j*nx] : 0.0;  // after fixing write-side indexing (see section 2)
+                double nn_ij = (mode == 2) ? jnn[i + j*nx] : 0.0;  
                 g[i + j*nx] = Sxhat_ij - (i == j ? 1.0 : 0.0) - nn_ij;
             }
         }
     }
-    //JACOBIAN END
 
     //deallocate
     if (yS) N_VDestroyVectorArray(yS, Ns);
@@ -495,121 +439,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     CVodeFree(&m_cvode_mem);
     SUNMatDestroy(A);
     SUNLinSolFree(LS);
-    ////////////////////////////////////////////////////////////////////////////////////////////
-    //JACOBIAN
-    //JACOBIAN
-    //JACOBIAN
-    //JACOBIAN
-    //JACOBIAN
-
-
-    // if (mode == 2)
-    // {
-    //     myfnn(nx, x, fnn); // evaluate f^{MLP}
-    //     for (int ii = 0; ii < nx; ii++)
-    //     {
-    //         f[ii] = f[ii] - x[ii] - fnn[ii];
-    //     }
-    // }
-    // // f(x) is the increment of x minus f^{MLP}(x)
-    // else
-    // {
-    //     for (int ii = 0; ii < nx; ii++)
-    //     {
-    //         f[ii] = f[ii] - x[ii];
-    //     }
-    // }
-
-    // if (need[1] == 1)
-    // { // this block is called when a Jacobian is needed
-
-    //     double xp[nx];
-    //     double xm[nx];
-    //     double fp[nf];
-    //     double fm[nf];
-
-    //     for (int ii = 0; ii < nx; ii++)
-    //     {
-
-    //         for (int jj = 0; jj < nx; jj++)
-    //         {
-    //             xp[jj] = x[jj];
-    //             xm[jj] = x[jj];
-    //         }
-
-    //         xp[ii] += dx;
-    //         xm[ii] -= dx;
-
-    //         tnow = 0.0;
-    //         fromxhat(xp, ptcl, nx, rusr);
-    //         T[0] = ptcl[0];
-    //         for (int ii = 1; ii < nx; ii++)
-    //         {
-    //             Y[ii - 1] = ptcl[ii];
-    //         }
-    //         gas->setState_TPY(T[0], p, Y);
-    //         integrator->initialize(tnow, odes);
-    //         integrator->integrate(dt);
-    //         solution = integrator->solution();
-    //         toxhat(solution, fp, nx, rusr);
-    //         if (mode == 2)
-    //         {
-    //             myfnn(nx, xp, fnn);
-    //             for (int ii = 0; ii < nx; ii++)
-    //             {
-    //                 fp[ii] = fp[ii] - xp[ii] - fnn[ii];
-    //             }
-    //         }
-    //         // evaluate f(x) at x+dx in the jj+1-th entry of x
-    //         else
-    //         {
-    //             for (int ii = 0; ii < nx; ii++)
-    //             {
-    //                 fp[ii] = fp[ii] - xp[ii];
-    //             }
-    //         }
-
-    //         tnow = 0.0;
-    //         fromxhat(xm, ptcl, nx, rusr);
-    //         T[0] = ptcl[0];
-    //         for (int ii = 1; ii < nx; ii++)
-    //         {
-    //             Y[ii - 1] = ptcl[ii];
-    //         }
-    //         gas->setState_TPY(T[0], p, Y);
-    //         integrator->initialize(tnow, odes);
-    //         integrator->integrate(dt);
-    //         solution = integrator->solution();
-    //         toxhat(solution, fm, nx, rusr);
-    //         if (mode == 2)
-    //         {
-    //             myfnn(nx, xm, fnn);
-    //             for (int ii = 0; ii < nx; ii++)
-    //             {
-    //                 fm[ii] = fm[ii] - xm[ii] - fnn[ii];
-    //             }
-    //         }
-    //         // evaluate f(x) at x-dx in the jj+1-th entry of x
-    //         else
-    //         {
-    //             for (int ii = 0; ii < nx; ii++)
-    //             {
-    //                 fm[ii] = fm[ii] - xm[ii];
-    //             }
-    //         }
-
-    //         for (int jj = 0; jj < nx; jj++)
-    //         {
-    //             g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
-    //         }
-    //         // calculate the jj+1-th partial derivative
-    //     }
-    // }
 }
 
 void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
 {
-    // mix two particles, conserving mass and energy
 
     double Y1[nx - 1], Y2[nx - 1]; // mass fractions
     double H1, H2;                 // enthalpies
@@ -627,7 +460,6 @@ void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], 
     {
         Y2[ii - 1] = ptcl2[ii];
     }
-    // extract temperature and mass fractios for the two particles
 
     gas->setState_TPY(T1[0], p, Y1); // initialize the gas to the state of the first particle
 
@@ -640,7 +472,6 @@ void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], 
     d = H2 - H1;
     H1 += alpha[0] * d;
     H2 -= alpha[0] * d; // mix enthalpies
-    // alpha is amount by which to mix the particles (0 is no mixing, 0.5 is complete mixing)
 
     for (int ii = 0; ii < nx - 1; ii++)
     {
@@ -660,7 +491,6 @@ void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], 
     gas->setState_HP(H2, p);
 
     T2[0] = gas->temperature(); // set the particle's thermodynamic states to the new mixed values, and
-    // extract the corresponding temperatures
 
     ptcl1[0] = T1[0];
     for (int ii = 1; ii < nx; ii++)
@@ -671,5 +501,5 @@ void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], 
     for (int ii = 1; ii < nx; ii++)
     {
         ptcl2[ii] = Y2[ii - 1];
-    } // pass the new temperatures and mass fractions to the output
+    }
 }
