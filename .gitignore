@@ -9,3 +9,4 @@ jacobian_example/bin/
 jacobian_example/custom
 .vscode/
 __pycache__/
+*.exe
