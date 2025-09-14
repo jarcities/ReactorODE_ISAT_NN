@@ -105,33 +105,23 @@ using namespace Gl;
 
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
 {
-    // this function converts the normalized vector x into temperature and mass fractions for one particle
-    // x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
-    // rusr[] are user-supplied normalization variables
-
-    ptcl[0] = (x[0] * rusr[nx]) + rusr[0]; // ptcl[0] is the temperature, in K
+    ptcl[0] = (x[0] * rusr[nx]) + rusr[0];
 
     for (int ii = 1; ii < nx; ii++)
     {
 
-        ptcl[ii] = rusr[ii] * exp(-log(rusr[ii]) * x[ii]) - rusr[ii]; // ptcl[ii] is the mass fraction of the ii-th
-                                                                      // species in the chemical mechanism
+        ptcl[ii] = rusr[ii] * exp(-log(rusr[ii]) * x[ii]) - rusr[ii]; 
     }
 }
 
 void toxhat(double ptcl[], double x[], int &nx, double rusr[])
 {
-    // this function converts a particle's temperature and mass fractions into the normalized vector x
-    // x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
-    // rusr[] are user-supplied normalization variables
-
-    x[0] = (ptcl[0] - rusr[0]) / rusr[nx]; // x[0] is the normalized temperature
+    x[0] = (ptcl[0] - rusr[0]) / rusr[nx]; 
 
     for (int ii = 1; ii < nx; ii++)
     {
 
-        x[ii] = -log((ptcl[ii] + rusr[ii]) / rusr[ii]) / log(rusr[ii]); // x[ii] is the normalized mass fraction
-                                                                        // of the ii-th species in the chemical mechanism
+        x[ii] = -log((ptcl[ii] + rusr[ii]) / rusr[ii]) / log(rusr[ii]);
     }
 }
 
@@ -331,7 +321,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     flag = CVodeInit(m_cvode_mem, RHS, tnow, y);
     assert(flag >= 0);
     flag = CVodeSStolerances(m_cvode_mem, rTol, aTol);
-    CVodeSetSensDQMethod(m_cvode_mem, CV_FORWARD, 1e-5); //CV_CENTERED or CV_FORWARD
+    CVodeSetSensDQMethod(m_cvode_mem, CV_FORWARD, aTol); //CV_CENTERED or CV_FORWARD
     assert(flag >= 0);
     flag = CVodeSetUserData(m_cvode_mem, &odes);
     assert(flag >= 0);
@@ -367,8 +357,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE (sensitivity does not control integrator)
         assert(flag >= 0);
-        sunrealtype s_rTol = 1e-5;                
-        std::vector<sunrealtype> s_aTol(Ns, 1e-5); 
+        sunrealtype s_rTol = 1e-4;                
+        std::vector<sunrealtype> s_aTol(Ns, 1e-4); 
         flag = CVodeSensSStolerances(m_cvode_mem, s_rTol, s_aTol.data());
         // flag = CVodeSensEEtolerances(m_cvode_mem);
         assert(flag >= 0);
