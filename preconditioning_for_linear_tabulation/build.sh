@@ -18,7 +18,7 @@ icpx -O3 -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eigen3 -c reactor_.cpp
 ifx -O3 \
     -I$CONDA_PREFIX/include \
     -I$HOME/code/isat/ISAT/isatab_ser \
-    -o PaSR.exe \
+    -o PaSR1.exe \
     PaSR_.f90 reactor_.o \
     $HOME/code/isat/ISAT/lib/libisatab_ser.a \
     $HOME/code/isat/ISAT/lib/libisat7_ser.a \
