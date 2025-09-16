@@ -266,8 +266,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];                  // temperature
     double ptcl[nx];              // particle properties
     double *solution;             // Cantera solution object
-    double aTol = 1e-4;           // rusr[2*nx];
-    double rTol = 1e-4;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
+    double aTol = 1e-3;           // rusr[2*nx];
+    double rTol = 1e-3;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     double dx = rusr[2 * nx + 3]; // spatial increment in x for Jacobian evaluation
     double p = rusr[2 * nx + 4];  // user-specified pressure
@@ -322,7 +322,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(flag >= 0);
     //////////////////////////////////////////////////
     flag = CVodeSStolerances(m_cvode_mem, rTol, aTol);
-    CVodeSetSensDQMethod(m_cvode_mem, CV_FORWARD, aTol); //CV_CENTERED or CV_FORWARD
+    CVodeSetSensDQMethod(m_cvode_mem, CV_FORWARD, 1e-3); //CV_CENTERED or CV_FORWARD
     //////////////////////////////////////////////////
     assert(flag >= 0);
     flag = CVodeSetUserData(m_cvode_mem, &odes);
@@ -360,8 +360,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE (sensitivity does not control integrator)
         assert(flag >= 0);
         //////////////////////////////////////////////////
-        sunrealtype s_rTol = 1e-5;                
-        std::vector<sunrealtype> s_aTol(Ns, 1e-5); 
+        sunrealtype s_rTol = 1e-4;                
+        std::vector<sunrealtype> s_aTol(Ns, 1e-4); 
         flag = CVodeSensSStolerances(m_cvode_mem, s_rTol, s_aTol.data());
         // flag = CVodeSensEEtolerances(m_cvode_mem);
         //////////////////////////////////////////////////

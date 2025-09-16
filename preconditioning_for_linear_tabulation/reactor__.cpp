@@ -390,8 +390,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE (sensitivity does not control integrator)
         assert(flag >= 0);
-        sunrealtype s_rTol = 1e-5;                
-        std::vector<sunrealtype> s_aTol(Ns_static, 1e-5); 
+        sunrealtype s_rTol = 1e-4;                
+        std::vector<sunrealtype> s_aTol(Ns_static, 1e-4); 
         flag = CVodeSensSStolerances(m_cvode_mem, s_rTol, s_aTol.data());
         // flag = CVodeSensEEtolerances(m_cvode_mem);
         assert(flag >= 0);
