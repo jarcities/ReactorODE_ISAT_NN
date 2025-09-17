@@ -351,7 +351,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
                 NV_Ith_S(yS_static[is], j) = (is == j ? 1.0 : 0.0);
             }
         }
-        flag = CVodeSensInit(m_cvode_mem, Ns_static, CV_STAGGERED, nullptr, yS_static); //CV_STAGGERED or CV_SIMULTANEOUS
+        flag = CVodeSensInit(m_cvode_mem, Ns_static, CV_SIMULTANEOUS, nullptr, yS_static); //CV_STAGGERED or CV_SIMULTANEOUS
         assert(flag >= 0);
         
         cvodes_objects_init = true;
@@ -386,7 +386,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
         //forward sens - reinitialize with existing vectors
-        flag = CVodeSensReInit(m_cvode_mem, CV_STAGGERED, yS_static); //CV_STAGGERED or CV_SIMULTANEOUS
+        flag = CVodeSensReInit(m_cvode_mem, CV_SIMULTANEOUS, yS_static); //CV_STAGGERED or CV_SIMULTANEOUS
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE (sensitivity does not control integrator)
         assert(flag >= 0);
