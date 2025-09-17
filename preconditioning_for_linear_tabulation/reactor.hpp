@@ -6,6 +6,8 @@ using namespace Cantera;
 
 extern "C"
 {
+  ReactorODEs;
+  
   void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution);
 
   void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[], double rusr[], double f[], double g[], double h[]);
