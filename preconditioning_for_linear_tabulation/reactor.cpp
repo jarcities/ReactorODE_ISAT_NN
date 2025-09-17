@@ -1,7 +1,87 @@
 #include "reactor.hpp"
 #include <cmath>
+#include <cvodes/cvodes.h>
+#include <nvector/nvector_serial.h>
+#include <sunmatrix/sunmatrix_dense.h>
+#include <sunlinsol/sunlinsol_dense.h>
+#include <sundials/sundials_types.h>
+#include <sundials/sundials_context.h>
+#include <cassert>
+
+#ifndef SUN_COMM_NULL
+#define SUN_COMM_NULL NULL
+#endif
 
 using namespace Cantera;
+
+static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+{
+    ReactorODEs *odes = static_cast<ReactorODEs *>(user_data);
+    double *y_data = NV_DATA_S(y);
+    double *yd_data = NV_DATA_S(ydot);
+    odes->eval((double)t, y_data, yd_data, nullptr);  // nullptr for p parameter
+    return 0;
+}
+
+void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution) {
+    static SUNContext sunctx = nullptr;
+    static bool initialized = false;
+    
+    if (!initialized) {
+        int flag = SUNContext_Create(SUN_COMM_NULL, &sunctx);
+        assert(flag >= 0);
+        initialized = true;
+    }
+    
+    size_t NEQ = odes.neq();
+    
+    N_Vector y = N_VNew_Serial(NEQ, sunctx);
+    assert(y);
+    double *y_data = NV_DATA_S(y);
+    odes.getState(y_data);
+    
+    void *cvode_mem = CVodeCreate(CV_BDF, sunctx);
+    assert(cvode_mem);
+    
+    double t0 = 0.0;
+    double t = t0;
+    int flag = CVodeInit(cvode_mem, RHS, t0, y);
+    assert(flag >= 0);
+    
+    flag = CVodeSStolerances(cvode_mem, rTol, aTol);
+    assert(flag >= 0);
+    flag = CVodeSetUserData(cvode_mem, &odes);
+    assert(flag >= 0);
+    flag = CVodeSetMaxNumSteps(cvode_mem, 50000);
+    assert(flag >= 0);
+    flag = CVodeSetMaxStep(cvode_mem, 1e-6);
+    assert(flag >= 0);
+    
+    SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
+    assert(A);
+    SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
+    assert(LS);
+    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+    assert(flag >= 0);
+    
+    //integrate
+    flag = CVode(cvode_mem, dt, y, &t, CV_NORMAL);
+    if (flag < 0) {
+    }
+    
+    //copy solution
+    for (size_t i = 0; i < NEQ; i++) {
+        solution[i] = y_data[i];
+    }
+    
+    //cleanup
+    N_VDestroy(y);
+    CVodeFree(&cvode_mem);
+    SUNMatDestroy(A);
+    SUNLinSolFree(LS);
+}
+
+
 
 namespace Gl{
 
@@ -198,15 +278,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 	
 	double tnow = 0.0; // initialize time
 	    
-    shared_ptr<Integrator> integrator(newIntegrator("CVODE")); // create a CVODE integrator of the ODE
-    
-    integrator->initialize(tnow, odes); // initialize the integrator
-	
-	integrator->setTolerances(aTol, rTol); // set ODE integration tolerances
-
-    integrator->integrate(dt); // integrate the chemical composition from time 0 to time dt
-	
-	solution = integrator->solution(); // extract the new gas properties
+    /////////////////////////////////////////////////////////
+    double solution_arr[nx];
+    integrate_cvodes(odes, dt, aTol, rTol, solution_arr);
+	double *solution = solution_arr;
+    /////////////////////////////////////////////////////////
 	
 	toxhat(solution,f,nx,rusr); // normalize the gas properties
 	
@@ -234,9 +310,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 			T[0] = ptcl[0];
 			for (int ii = 1; ii < nx; ii++){ Y[ii-1] = ptcl[ii];}
 			gas->setState_TPY(T[0], p, Y);   
-			integrator->initialize(tnow, odes);
-			integrator->integrate(dt);
-			solution = integrator->solution();
+			ReactorODEs odes_p = ReactorODEs(sol);
+            /////////////////////////////////////////////////////////
+			double solution_arr_p[nx];
+			integrate_cvodes(odes_p, dt, aTol, rTol, solution_arr_p);
+			solution = solution_arr_p;
+            /////////////////////////////////////////////////////////
 			toxhat(solution,fp,nx,rusr);
 			if (mode==2){
 				myfnn(nx, xp, fnn);
@@ -249,9 +328,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 			T[0] = ptcl[0];
 			for (int ii = 1; ii < nx; ii++){ Y[ii-1] = ptcl[ii];}
 			gas->setState_TPY(T[0], p, Y);   
-			integrator->initialize(tnow, odes);
-			integrator->integrate(dt);
-			solution = integrator->solution();
+			ReactorODEs odes_m = ReactorODEs(sol);
+            /////////////////////////////////////////////////////////
+			double solution_arr_m[nx];
+			integrate_cvodes(odes_m, dt, aTol, rTol, solution_arr_m);
+			solution = solution_arr_m;
+            /////////////////////////////////////////////////////////
 			toxhat(solution,fm,nx,rusr);
 			if (mode == 2){
 				myfnn(nx, xm, fnn);

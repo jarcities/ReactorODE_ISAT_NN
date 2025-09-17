@@ -1,4 +1,13 @@
 
+#include "cantera/core.h"
+#include "cantera/numerics/FuncEval.h"
+#include <memory>
+#include <vector>
+
+using namespace Cantera;
+using std::shared_ptr;
+using std::vector;
+
 class ReactorODEs : public FuncEval {
 public:
     /**

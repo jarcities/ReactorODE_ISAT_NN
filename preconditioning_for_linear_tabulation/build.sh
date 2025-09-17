@@ -1,10 +1,10 @@
 #!/bin/bash
 rm *.o
 rm *.mod
-rm PaSR.exe
+rm *.exe
 
 # icpx -O3 -I$CONDA_PREFIX/include -c reactor.cpp 
-icpx -O3 -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eigen3 -c reactor_.cpp
+icpx -O3 -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eigen3 -c reactor.cpp
 
 # ifx -O3 \
 #     -L$CONDA_PREFIX/lib \
@@ -18,8 +18,8 @@ icpx -O3 -I$CONDA_PREFIX/include -I$CONDA_PREFIX/include/eigen3 -c reactor_.cpp
 ifx -O3 \
     -I$CONDA_PREFIX/include \
     -I$HOME/code/isat/ISAT/isatab_ser \
-    -o PaSR_.exe \
-    PaSR_.f90 reactor_.o \
+    -o main.exe \
+    PaSR.f90 reactor.o \
     $HOME/code/isat/ISAT/lib/libisatab_ser.a \
     $HOME/code/isat/ISAT/lib/libisat7_ser.a \
     $HOME/code/isat/ISAT/lib/libice_pic.a \
