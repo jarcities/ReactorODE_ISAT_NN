@@ -1,12 +1,25 @@
-(intel_cantera) [jsampayan4914@gpu004 preconditioning_for_linear_tabulation]$ ./build.sh 
-rm: cannot remove '*.o': No such file or directory
-reactor_.cpp:370:16: error: no matching function for call to 'CVodeSensSStolerances'
-  370 |         flag = CVodeSensSStolerances(m_cvode_mem, double(1e-5), double(1e-5)); //1e-8, 1e-8 original
-      |                ^~~~~~~~~~~~~~~~~~~~~
-/home/jsampayan4914/miniconda3/envs/intel_cantera/include/cvodes/cvodes.h:364:21: note: candidate function not viable: no known conversion from 'double' to 'sunrealtype *' (aka 'double *') for 3rd argument
-  364 | SUNDIALS_EXPORT int CVodeSensSStolerances(void* cvode_mem, sunrealtype reltolS,
-      |                     ^
-  365 |                                           sunrealtype* abstolS);
-      |                                           ~~~~~~~~~~~~~~~~~~~~
-1 error generated.
-ifx: error #10236: File not found: 'reactor_.o'
+  0.125472462170646       3.892556548706984E-005  1.785259105884333E-006
+  6.423388208544635E-039  0.774856776512407        373853.000000000     
+   1774.93701534647       2.064621654623590E-003  1.144541931538671E-003
+  8.373693672732810E-003  6.377807900495844E-002  9.844308204077898E-003
+  0.142728601144142       3.245284317372976E-005  1.674972055918762E-006
+  5.647242620318263E-039  0.772032026572475        381208.000000000     
+   1619.39651005315       2.311979950734380E-003  1.159857636965879E-003
+  7.892594181931164E-003  8.416072765652019E-002  7.356887246819894E-003
+  0.122971960512775       4.947724264284683E-005  2.938796591443167E-006
+  5.544537777459428E-039  0.774093576774963        395465.000000000     
+   1005.46286642335       3.816499369573486E-003  1.640369951712197E-004
+  9.194321214009624E-004  0.179723711661934       8.921756148630344E-004
+  3.100702429302024E-002  1.610485093675002E-004  1.700531669450766E-005
+  1.784549915909186E-039  0.783299066117924        408827.000000000     
+ ("Time = ",e10.3," seconds.")   10060.6612860000     
+ RMS error:   2.289137246674216E-005
+ Mean temp:    1442.44970185527     
+ Mean H:   0.113614065199919     
+ Number of queries:    40000000.0000000     
+ Number of leaves:    826083.000000000     
+ Number of grows:    15887.0000000000     
+ Number of adds:    826083.000000000     
+ Fraction of retrieves:   3.6708750E-03
+ Number of unresolved:   0.000000000000000E+000
+ Number of DEs:    39011195.0000000 
