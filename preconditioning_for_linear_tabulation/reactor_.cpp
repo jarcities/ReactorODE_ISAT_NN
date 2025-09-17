@@ -283,7 +283,16 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     static int aaaa;
     int flag;
     static SUNContext sunctx; 
-    static bool cvodes_init = false; 
+    static bool cvodes_init = false;
+    
+    // Static variables for CVODES reuse - MAJOR PERFORMANCE IMPROVEMENT
+    static void *m_cvode_mem = nullptr;
+    static N_Vector y_static = nullptr;
+    static N_Vector *yS_static = nullptr;
+    static SUNMatrix A_static = nullptr;
+    static SUNLinearSolver LS_static = nullptr;
+    static int Ns_static = 0;
+    static bool cvodes_objects_init = false; 
 
     if (aaaa != 7777)
     {
@@ -311,81 +320,100 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     size_t NEQ = odes.neq();
     assert((int)NEQ == nx && "Mismatch between reactor state size and normalized vector size");
 
-    //CVODES setup
-    N_Vector y = N_VNew_Serial(NEQ, sunctx);
-    assert(y);
-    double *y_data = NV_DATA_S(y);
+    // Initialize CVODES objects only once - HUGE PERFORMANCE GAIN
+    if (!cvodes_objects_init) {
+        y_static = N_VNew_Serial(NEQ, sunctx);
+        assert(y_static);
+        m_cvode_mem = CVodeCreate(CV_BDF, sunctx);
+        assert(m_cvode_mem);
+        A_static = SUNDenseMatrix(NEQ, NEQ, sunctx);
+        assert(A_static);
+        LS_static = SUNLinSol_Dense(y_static, A_static, sunctx);
+        assert(LS_static);
+        
+        // Initial setup of CVODES
+        double *y_temp = NV_DATA_S(y_static);
+        odes.getState(y_temp);
+        flag = CVodeInit(m_cvode_mem, RHS, tnow, y_static);
+        assert(flag >= 0);
+        flag = CVodeSetLinearSolver(m_cvode_mem, LS_static, A_static);
+        assert(flag >= 0);
+        
+        // Always setup sensitivity arrays for maximum flexibility
+        Ns_static = (int)NEQ;
+        yS_static = N_VCloneVectorArray(Ns_static, y_static);
+        assert(yS_static);
+        // Initialize sensitivity vectors
+        for (int is = 0; is < Ns_static; ++is)
+        {
+            for (int j = 0; j < (int)NEQ; ++j)
+            {
+                NV_Ith_S(yS_static[is], j) = (is == j ? 1.0 : 0.0);
+            }
+        }
+        flag = CVodeSensInit(m_cvode_mem, Ns_static, CV_SIMULTANEOUS, nullptr, yS_static); //CV_STAGGERED or CV_SIMULTANEOUS
+        assert(flag >= 0);
+        
+        cvodes_objects_init = true;
+    }
+
+    // Reset and reinitialize for this call
+    double *y_data = NV_DATA_S(y_static);
     odes.getState(y_data);
-    void *m_cvode_mem = CVodeCreate(CV_BDF, sunctx); 
-    assert(m_cvode_mem);
-    flag = CVodeInit(m_cvode_mem, RHS, tnow, y);
+    
+    // Reinitialize with new initial conditions (much faster than full setup)
+    flag = CVodeReInit(m_cvode_mem, tnow, y_static);
     assert(flag >= 0);
-    //////////////////////////////////////////////////
     flag = CVodeSStolerances(m_cvode_mem, rTol, aTol);
-    CVodeSetSensDQMethod(m_cvode_mem, CV_FORWARD, 1e-5); //CV_CENTERED or CV_FORWARD
-    //////////////////////////////////////////////////
     assert(flag >= 0);
+    CVodeSetSensDQMethod(m_cvode_mem, CV_CENTERED, 1e-5); //CV_CENTERED or CV_FORWARD
     flag = CVodeSetUserData(m_cvode_mem, &odes);
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
     assert(flag >= 0);
     flag = CVodeSetMaxStep(m_cvode_mem, dt); //1e-6 original
     assert(flag >= 0);
-    SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
-    assert(A);
-    SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
-    assert(LS);
-    flag = CVodeSetLinearSolver(m_cvode_mem, LS, A);
-    assert(flag >= 0);
 
     //jacobian
-    N_Vector *yS = nullptr;
-    int Ns = 0; 
     if (need[1] == 1)
     {
-        Ns = (int)NEQ;
-        //setup sensitivity analysis
-        yS = N_VCloneVectorArray(Ns, y);
-        assert(yS);
-        for (int is = 0; is < Ns; ++is)
+        // Reinitialize sensitivity vectors
+        for (int is = 0; is < Ns_static; ++is)
         {
             for (int j = 0; j < (int)NEQ; ++j)
             {
-                NV_Ith_S(yS[is], j) = (is == j ? 1.0 : 0.0);
+                NV_Ith_S(yS_static[is], j) = (is == j ? 1.0 : 0.0);
             }
         }
-        //forward sens
-        flag = CVodeSensInit(m_cvode_mem, Ns, CV_STAGGERED, /*fS*/ nullptr, yS); //CV_STAGGERED or CV_SIMULTANEOUS
+        //forward sens - reinitialize with existing vectors
+        flag = CVodeSensReInit(m_cvode_mem, CV_SIMULTANEOUS, yS_static); //CV_STAGGERED or CV_SIMULTANEOUS
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(m_cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE (sensitivity does not control integrator)
         assert(flag >= 0);
-        //////////////////////////////////////////////////
         sunrealtype s_rTol = 1e-5;                
-        std::vector<sunrealtype> s_aTol(Ns, 1e-5); 
+        std::vector<sunrealtype> s_aTol(Ns_static, 1e-5); 
         flag = CVodeSensSStolerances(m_cvode_mem, s_rTol, s_aTol.data());
         // flag = CVodeSensEEtolerances(m_cvode_mem);
-        //////////////////////////////////////////////////
         assert(flag >= 0);
-        std::vector<sunrealtype> p(Ns, 0.0);
-        std::vector<sunrealtype> pbar(Ns, 1.0);
+        std::vector<sunrealtype> p(Ns_static, 0.0);
+        std::vector<sunrealtype> pbar(Ns_static, 1.0);
         flag = CVodeSetSensParams(m_cvode_mem, p.data(), pbar.data(), nullptr);
+        assert(flag >= 0);
+    } else {
+        // Turn off sensitivity if not needed for this call
+        flag = CVodeSensToggleOff(m_cvode_mem);
         assert(flag >= 0);
     }
 
     //integrate
-    flag = CVode(m_cvode_mem, tfinal, y, &t, CV_NORMAL);
+    flag = CVode(m_cvode_mem, tfinal, y_static, &t, CV_NORMAL);
     if (flag < 0)
     {
         std::cout << "integration failed -> " << flag << std::endl;
-        if (yS) N_VDestroyVectorArray(yS, Ns);
-        N_VDestroy(y);
-        CVodeFree(&m_cvode_mem);
-        SUNMatDestroy(A);
-        SUNLinSolFree(LS);
-        return;
+        return;  // No cleanup needed - static objects persist
     }
 
-    toxhat(NV_DATA_S(y), f, nx, rusr); 
+    toxhat(NV_DATA_S(y_static), f, nx, rusr); 
 
     if (mode == 2)
     {
@@ -407,11 +435,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     //jacobian
     if (need[1] == 1)
     {
-        flag = CVodeGetSens(m_cvode_mem, &t, yS);
+        flag = CVodeGetSens(m_cvode_mem, &t, yS_static);
         assert(flag >= 0);
         std::vector<double> J_to_tf(nx), J_from_0(nx);
 
-        double* y_final = NV_DATA_S(y);
+        double* y_final = NV_DATA_S(y_static);
         J_to_tf[0] = 1.0 / rusr[nx]; 
         for (int i = 1; i < nx; ++i) {
             double ri = rusr[i];
@@ -426,7 +454,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         }
 
         for (int j = 0; j < (int)NEQ; ++j) {           
-            double* Sj = NV_DATA_S(yS[j]);             
+            double* Sj = NV_DATA_S(yS_static[j]);             
             for (int i = 0; i < (int)NEQ; ++i) {      
                 double Sxhat_ij = J_to_tf[i] * Sj[i] * J_from_0[j];
                 double nn_ij = (mode == 2) ? jnn[i + j*nx] : 0.0;  
@@ -435,12 +463,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         }
     }
 
-    //deallocate
-    if (yS) N_VDestroyVectorArray(yS, Ns);
-    N_VDestroy(y);
-    CVodeFree(&m_cvode_mem);
-    SUNMatDestroy(A);
-    SUNLinSolFree(LS);
 }
 
 void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
