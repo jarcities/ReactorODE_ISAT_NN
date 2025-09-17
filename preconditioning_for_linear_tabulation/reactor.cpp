@@ -156,7 +156,6 @@ namespace Gl{
 
 using namespace Gl;
 
-#include "custom.hpp"
 // "custom.hpp" is the ReactorODEs class from lines 21-147 of the file "custom.cpp" which can be found
 // at this URL: https://cantera.org/3.1/examples/cxx/custom.html (retrieved 06/05/2025)
 

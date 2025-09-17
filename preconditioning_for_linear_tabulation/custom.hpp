@@ -42,9 +42,6 @@ public:
         m_nEqs = m_nSpecies + 1;
     }
 
-    // CVODES integration function
-    void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution);
-
     /* %%
      * Evaluate the ODE right-hand-side function, :math:`\dot{y} = f(t,y)`.
      *
@@ -138,4 +135,7 @@ private:
     size_t m_nSpecies;
     size_t m_nEqs;
 };
+
+// CVODES integration function
+void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution);
 
