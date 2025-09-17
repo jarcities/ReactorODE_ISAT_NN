@@ -1,4 +1,5 @@
 #include "reactor.hpp"
+#include "custom.hpp"
 #include <cmath>
 #include <cvodes/cvodes.h>
 #include <nvector/nvector_serial.h>
@@ -250,7 +251,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 	double Y[nx-1]; // mass fraction
 	double T[1]; //temperature
 	double ptcl[nx]; // particle properties
-	double *solution; // Cantera solution object
 	double aTol = 1e-8; //rusr[2*nx];
 	double rTol = 1e-8; //rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
 	double dt = rusr[2*nx+2]; // time step over which to integrate
@@ -281,10 +281,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     /////////////////////////////////////////////////////////
     double solution_arr[nx];
     integrate_cvodes(odes, dt, aTol, rTol, solution_arr);
-	double *solution = solution_arr;
     /////////////////////////////////////////////////////////
 	
-	toxhat(solution,f,nx,rusr); // normalize the gas properties
+	toxhat(solution_arr,f,nx,rusr); // normalize the gas properties
 	
 	if ( mode==2 ){
 		myfnn(nx, x, fnn); // evaluate f^{MLP}
@@ -314,9 +313,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             /////////////////////////////////////////////////////////
 			double solution_arr_p[nx];
 			integrate_cvodes(odes_p, dt, aTol, rTol, solution_arr_p);
-			solution = solution_arr_p;
             /////////////////////////////////////////////////////////
-			toxhat(solution,fp,nx,rusr);
+			toxhat(solution_arr_p,fp,nx,rusr);
 			if (mode==2){
 				myfnn(nx, xp, fnn);
 				for (int ii=0; ii<nx; ii++){fp[ii] = fp[ii] - xp[ii] - fnn[ii];}}
@@ -332,9 +330,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             /////////////////////////////////////////////////////////
 			double solution_arr_m[nx];
 			integrate_cvodes(odes_m, dt, aTol, rTol, solution_arr_m);
-			solution = solution_arr_m;
             /////////////////////////////////////////////////////////
-			toxhat(solution,fm,nx,rusr);
+			toxhat(solution_arr_m,fm,nx,rusr);
 			if (mode == 2){
 				myfnn(nx, xm, fnn);
 				for (int ii=0; ii<nx; ii++){fm[ii] = fm[ii] - xm[ii] - fnn[ii];}}

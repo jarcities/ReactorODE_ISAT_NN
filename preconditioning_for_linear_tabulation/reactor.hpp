@@ -4,14 +4,10 @@
 
 using namespace Cantera;
 
-// Forward declaration
-class ReactorODEs;
-
-// CVODES integration function
-void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution);
-
 extern "C"
 {
+  void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution);
+
   void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[], double rusr[], double f[], double g[], double h[]);
 	   
   void mymix(int &nx, double x1[], double x2[], double alpha[], int iusr[], double rusr[] );
