@@ -266,8 +266,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T[1];                  // temperature
     double ptcl[nx];              // particle properties
     double *solution;             // Cantera solution object
-    double aTol = 1e-4;           // rusr[2*nx];
-    double rTol = 1e-4;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
+    double aTol = 1e-5;           // rusr[2*nx];
+    double rTol = 1e-5;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     double dx = rusr[2 * nx + 3]; // spatial increment in x for Jacobian evaluation
     double p = rusr[2 * nx + 4];  // user-specified pressure
@@ -366,7 +366,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(flag >= 0);
     flag = CVodeSStolerances(m_cvode_mem, rTol, aTol);
     assert(flag >= 0);
-    CVodeSetSensDQMethod(m_cvode_mem, CV_CENTERED, 1e-4); //CV_CENTERED or CV_FORWARD
+    CVodeSetSensDQMethod(m_cvode_mem, CV_CENTERED, 1e-5); //CV_CENTERED or CV_FORWARD
     flag = CVodeSetUserData(m_cvode_mem, &odes);
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
