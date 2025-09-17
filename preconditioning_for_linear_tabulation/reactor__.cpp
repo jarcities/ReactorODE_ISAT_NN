@@ -366,7 +366,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     assert(flag >= 0);
     flag = CVodeSStolerances(m_cvode_mem, rTol, aTol);
     assert(flag >= 0);
-    CVodeSetSensDQMethod(m_cvode_mem, CV_FORWARD, 1e-5); //CV_CENTERED or CV_FORWARD
+    CVodeSetSensDQMethod(m_cvode_mem, CV_CENTERED, 1e-5); //CV_CENTERED or CV_FORWARD
     flag = CVodeSetUserData(m_cvode_mem, &odes);
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(m_cvode_mem, 50000);
