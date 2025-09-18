@@ -24,7 +24,7 @@ static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     return 0;
 }
 
-void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution) {
+void CVODES_INTEGRATE(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution) {
     static SUNContext sunctx = nullptr;
     static bool initialized = false;
     
@@ -55,7 +55,7 @@ void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, do
     assert(flag >= 0);
     flag = CVodeSetMaxNumSteps(cvode_mem, 50000);
     assert(flag >= 0);
-    flag = CVodeSetMaxStep(cvode_mem, 1e-6);
+    flag = CVodeSetMaxStep(cvode_mem, 1e-6); //dt or 1e-6
     assert(flag >= 0);
     
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
@@ -279,7 +279,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 	    
     /////////////////////////////////////////////////////////
     double solution_arr[nx];
-    integrate_cvodes(odes, dt, aTol, rTol, solution_arr);
+    CVODES_INTEGRATE(odes, dt, aTol, rTol, solution_arr);
     /////////////////////////////////////////////////////////
 	
 	toxhat(solution_arr,f,nx,rusr); // normalize the gas properties
@@ -311,7 +311,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 			ReactorODEs odes_p = ReactorODEs(sol);
             /////////////////////////////////////////////////////////
 			double solution_arr_p[nx];
-			integrate_cvodes(odes_p, dt, aTol, rTol, solution_arr_p);
+			CVODES_INTEGRATE(odes_p, dt, aTol, rTol, solution_arr_p);
             /////////////////////////////////////////////////////////
 			toxhat(solution_arr_p,fp,nx,rusr);
 			if (mode==2){
@@ -328,7 +328,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 			ReactorODEs odes_m = ReactorODEs(sol);
             /////////////////////////////////////////////////////////
 			double solution_arr_m[nx];
-			integrate_cvodes(odes_m, dt, aTol, rTol, solution_arr_m);
+			CVODES_INTEGRATE(odes_m, dt, aTol, rTol, solution_arr_m);
             /////////////////////////////////////////////////////////
 			toxhat(solution_arr_m,fm,nx,rusr);
 			if (mode == 2){
