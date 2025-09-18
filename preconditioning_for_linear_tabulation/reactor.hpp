@@ -2,8 +2,6 @@
 #include "cantera/numerics/Integrator.h"
 #include <iostream>
 
-using namespace Cantera;
-
 extern "C"
 {
   void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[], double rusr[], double f[], double g[], double h[]);
@@ -16,6 +14,8 @@ extern "C"
   
   void fromxhat(double ptcl[], double x[], int &nx, double rusr[] );
 } //fortran90/C interface
+
+using namespace Cantera;
 
 namespace Gl{  // global variables
 

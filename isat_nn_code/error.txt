@@ -1,0 +1,32 @@
+(intel_cantera) [jsampayan4914@gpu004 preconditioning_for_linear_tabulation]$ ./build.sh 
+rm: cannot remove '*.o': No such file or directory
+rm: cannot remove '*.mod': No such file or directory
+rm: cannot remove '*.exe': No such file or directory
+reactor.cpp:22:9: error: member access into incomplete type 'ReactorODEs'
+   22 |     odes->eval((double)t, y_data, yd_data, nullptr);  // nullptr for p parameter
+      |         ^
+./reactor.hpp:8:7: note: forward declaration of 'ReactorODEs'
+    8 | class ReactorODEs;
+      |       ^
+reactor.cpp:36:22: error: member access into incomplete type 'ReactorODEs'
+   36 |     size_t NEQ = odes.neq();
+      |                      ^
+./reactor.hpp:8:7: note: forward declaration of 'ReactorODEs'
+    8 | class ReactorODEs;
+      |       ^
+reactor.cpp:41:9: error: member access into incomplete type 'ReactorODEs'
+   41 |     odes.getState(y_data);
+      |         ^
+./reactor.hpp:8:7: note: forward declaration of 'ReactorODEs'
+    8 | class ReactorODEs;
+      |       ^
+reactor.cpp:284:10: error: redefinition of 'solution'
+  284 |         double *solution = solution_arr;
+      |                 ^
+reactor.cpp:253:10: note: previous definition is here
+  253 |         double *solution; // Cantera solution object
+      |                 ^
+4 errors generated.
+ifx: error #10236: File not found: 'reactor.o'
+(intel_cantera) [jsampayan4914@gpu004 preconditioning_for_linear_tabulation]$ 
+

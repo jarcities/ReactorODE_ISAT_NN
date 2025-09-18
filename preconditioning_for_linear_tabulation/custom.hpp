@@ -135,7 +135,3 @@ private:
     size_t m_nSpecies;
     size_t m_nEqs;
 };
-
-// CVODES integration function
-void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution);
-
