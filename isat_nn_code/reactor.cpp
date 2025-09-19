@@ -76,7 +76,9 @@ void CVODES_SENSITIVITY(ReactorODEs &odes, double dt, double aTol, double rTol, 
     // use internal sensitivity calculation
     flag = CVodeSensInit(cvode_mem, Ns, CV_SIMULTANEOUS, /*fS=*/nullptr, yS.data());
     assert(flag >= 0);
-    flag = CVodeSensSStolerances(cvode_mem, rTol, aTol);
+    sunrealtype sens_aTol = RCONST(1e-8); 
+    sunrealtype sens_rTol = RCONST(1e-8);
+    flag = CVodeSensSStolerances(cvode_mem, sens_rTol, sens_aTol);
     assert(flag >= 0);
     flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
     assert(flag >= 0);
