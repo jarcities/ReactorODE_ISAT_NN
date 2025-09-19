@@ -8,6 +8,7 @@
 #include <sundials/sundials_types.h>
 #include <sundials/sundials_context.h>
 #include <cassert>
+#include <sundials/sundials_types.h> //ADDED
 
 #ifndef SUN_COMM_NULL
 #define SUN_COMM_NULL NULL
@@ -76,8 +77,8 @@ void CVODES_SENSITIVITY(ReactorODEs &odes, double dt, double aTol, double rTol, 
     // use internal sensitivity calculation
     flag = CVodeSensInit(cvode_mem, Ns, CV_SIMULTANEOUS, /*fS=*/nullptr, yS.data());
     assert(flag >= 0);
-    sunrealtype sens_aTol = RCONST(1e-8); 
-    sunrealtype sens_rTol = RCONST(1e-8);
+    sunrealtype sens_aTol = SUN_RCONST(1e-8); 
+    sunrealtype sens_rTol = SUN_RCONST(1e-8);
     flag = CVodeSensSStolerances(cvode_mem, sens_rTol, sens_aTol);
     assert(flag >= 0);
     flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
