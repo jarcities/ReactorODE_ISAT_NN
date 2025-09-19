@@ -72,7 +72,8 @@ void CVODES_SENSITIVITY(ReactorODEs &odes,sunrealtype dt, sunrealtype aTol, sunr
     assert(flag >= 0);
 
     //grab sensitivities
-    flag = CVodeSetSensParams(cvode_mem, p.data(), pbar.data(), plist.data());
+    // flag = CVodeSetSensParams(cvode_mem, p.data(), pbar.data(), plist.data());
+    CVodeSetSensParams(cvode_mem, p.data(), /*pbar=*/nullptr, /*plist=*/nullptr);
     assert(flag >= 0);
     const sunindextype Ns = NEQ;
     std::vector<N_Vector> yS(Ns);
