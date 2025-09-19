@@ -8,13 +8,15 @@ using namespace Cantera;
 using std::shared_ptr;
 using std::vector;
 
-class ReactorODEs : public FuncEval {
+class ReactorODEs : public FuncEval
+{
 public:
     /**
      * Constructor
      * @param[in] sol Solution object specifying initial system state.
      */
-    ReactorODEs(shared_ptr<Solution> sol) {
+    ReactorODEs(shared_ptr<Solution> sol)
+    {
         /* ---------------------- INITIALIZE MEMBER VARS ---------------------- */
 
         // pointer to the system's ThermoPhase object. updated by the solver during
@@ -58,7 +60,8 @@ public:
      *
      * note: sensitivity analysis isn't implemented in this example
      */
-    void eval(double t, double* y, double* ydot, double* p) override {
+    void eval(double t, double *y, double *ydot, double *p) override
+    {
         // the solution vector *y* is [T, Y_1, Y_2, ... Y_K], where T is the
         // system temperature, and Y_k is the mass fraction of species k.
         // similarly, the time derivative of the solution vector, *ydot*, is
@@ -89,10 +92,11 @@ public:
         // or equivalently:
         //     dT/dt = - sum[hbar(k) * dw(k)/dt] / (rho * cp)
         double hdot_vol = 0;
-        for (size_t k = 0; k < m_nSpecies; k++) {
+        for (size_t k = 0; k < m_nSpecies; k++)
+        {
             hdot_vol += m_hbar[k] * m_wdot[k];
         }
-        *dTdt = - hdot_vol / (rho * cp);
+        *dTdt = -hdot_vol / (rho * cp);
 
         /* --------------------- SPECIES CONSERVATION EQS --------------------- */
         // the rate of change of each species' mass fraction is found using the closed-system
@@ -100,7 +104,8 @@ public:
         //     m*dY(k)/dt = dm(k)/dt
         // or equivalently:
         //     dY(k)/dt = dw(k)/dt * MW(k) / rho
-        for (size_t k = 0; k < m_nSpecies; k++) {
+        for (size_t k = 0; k < m_nSpecies; k++)
+        {
             dYdt[k] = m_wdot[k] * m_gas->molecularWeight(k) / rho;
         }
     }
@@ -109,7 +114,8 @@ public:
      * Number of equations in the ODE system.
      *   - overridden from FuncEval, called by the integrator during initialization.
      */
-    size_t neq() const override {
+    size_t neq() const override
+    {
         return m_nEqs;
     }
 
@@ -118,7 +124,8 @@ public:
      *   - overridden from FuncEval, called by the integrator during initialization.
      * @param[out] y solution vector, length neq()
      */
-    void getState(double* y) override {
+    void getState(double *y) override
+    {
         // the solution vector *y* is [T, Y_1, Y_2, ... Y_K], where T is the
         // system temperature, and Y_k is the mass fraction of species k.
         y[0] = m_gas->temperature();
@@ -137,5 +144,4 @@ private:
 };
 
 // CVODES integration function
-void integrate_cvodes(ReactorODEs& odes, double dt, double aTol, double rTol, double* solution);
-
+void integrate_cvodes(ReactorODEs &odes, double dt, double aTol, double rTol, double *solution);
