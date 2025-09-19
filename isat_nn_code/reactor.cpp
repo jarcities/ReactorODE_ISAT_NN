@@ -82,7 +82,7 @@ void CVODES_SENSITIVITY(ReactorODEs &odes, double dt, double aTol, double rTol, 
     // flag = CVodeSensSStolerances(cvode_mem, SENS_RTOL, SENS_ATOL);
     flag = CVodeSensEEtolerances(cvode_mem);
     assert(flag >= 0);
-    flag = CVodeSetSensErrCon(cvode_mem, SUNFALSE); //SUNTRUE or SUNFALSE
+    flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE); //SUNTRUE or SUNFALSE
     assert(flag >= 0);
     flag = CVodeSetSensDQMethod(cvode_mem, CV_CENTERED, 0.0);
     assert(flag >= 0);
