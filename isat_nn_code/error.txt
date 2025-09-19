@@ -1,0 +1,20 @@
+[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
+main.exe: reactor.cpp:92: void CVODES_SENSITIVITY(ReactorODEs &, double, double, double, double *): Assertion `flag >= 0' failed.
+forrtl: error (76): Abort trap signal
+Image              PC                Routine            Line        Source             
+libc.so.6          000015554CE3EBF0  Unknown               Unknown  Unknown
+libc.so.6          000015554CE8BEDC  Unknown               Unknown  Unknown
+libc.so.6          000015554CE3EB46  raise                 Unknown  Unknown
+libc.so.6          000015554CE28833  abort                 Unknown  Unknown
+libc.so.6          000015554CE2875B  Unknown               Unknown  Unknown
+libc.so.6          000015554CE37886  Unknown               Unknown  Unknown
+main.exe           0000000000417825  Unknown               Unknown  Unknown
+main.exe           00000000004191C6  Unknown               Unknown  Unknown
+main.exe           000000000041D44C  Unknown               Unknown  Unknown
+main.exe           000000000040D5C0  Unknown               Unknown  Unknown
+main.exe           000000000040775D  Unknown               Unknown  Unknown
+libc.so.6          000015554CE295D0  Unknown               Unknown  Unknown
+libc.so.6          000015554CE29680  __libc_start_main     Unknown  Unknown
+main.exe           0000000000407675  Unknown               Unknown  Unknown
+Aborted (core dumped)
+(intel_cantera) [jsampayan4914@gpu004 isat_nn_code]$ 
