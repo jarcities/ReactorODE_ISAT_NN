@@ -12,6 +12,8 @@
 
 #ifndef SUN_COMM_NULL
 #define SUN_COMM_NULL NULL
+#define SENS_ATOL = SUN_RCONST(1e-8); 
+#define SENS_RTOL = SUN_RCONST(1e-8);
 #endif
 
 using namespace Cantera;
@@ -77,9 +79,7 @@ void CVODES_SENSITIVITY(ReactorODEs &odes, double dt, double aTol, double rTol, 
     // use internal sensitivity calculation
     flag = CVodeSensInit(cvode_mem, Ns, CV_SIMULTANEOUS, /*fS=*/nullptr, yS.data());
     assert(flag >= 0);
-    sunrealtype sens_aTol = SUN_RCONST(1e-8); 
-    sunrealtype sens_rTol = SUN_RCONST(1e-8);
-    flag = CVodeSensSStolerances(cvode_mem, sens_rTol, sens_aTol);
+    flag = CVodeSensSStolerances(cvode_mem, SENS_RTOL, SENS_ATOL);
     assert(flag >= 0);
     flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
     assert(flag >= 0);
