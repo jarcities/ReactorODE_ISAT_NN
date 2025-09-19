@@ -73,8 +73,6 @@ void CVODES_SENSITIVITY(ReactorODEs &odes,sunrealtype dt, sunrealtype aTol, sunr
 
     //grab sensitivities
     // flag = CVodeSetSensParams(cvode_mem, p.data(), pbar.data(), plist.data());
-    CVodeSetSensParams(cvode_mem, p.data(), /*pbar=*/nullptr, /*plist=*/nullptr);
-    assert(flag >= 0);
     const sunindextype Ns = NEQ;
     std::vector<N_Vector> yS(Ns);
     for (sunindextype j = 0; j < Ns; ++j)
@@ -84,8 +82,9 @@ void CVODES_SENSITIVITY(ReactorODEs &odes,sunrealtype dt, sunrealtype aTol, sunr
         N_VConst(SUN_RCONST(0.0), yS[j]);
         NV_Ith_S(yS[j], j) = SUN_RCONST(1.0);
     }
-
     flag = CVodeSensInit(cvode_mem, Ns, CV_SIMULTANEOUS, /*fS=*/nullptr, yS.data());
+    assert(flag >= 0);
+    CVodeSetSensParams(cvode_mem, p.data(), /*pbar=*/nullptr, /*plist=*/nullptr);
     assert(flag >= 0);
     flag = CVodeSensEEtolerances(cvode_mem);
     assert(flag >= 0);
@@ -113,7 +112,7 @@ void CVODES_SENSITIVITY(ReactorODEs &odes,sunrealtype dt, sunrealtype aTol, sunr
 
     //cleanup
     for (auto &v : yS)
-        N_VDestroy(v);
+    N_VDestroy(v);
     SUNLinSolFree(LS);
     SUNMatDestroy(A);
     CVodeFree(&cvode_mem);
