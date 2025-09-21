@@ -25,100 +25,6 @@ static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
     return 0;
 }
 
-// void CVODES_SENSITIVITY(ReactorODEs &odes,sunrealtype dt, sunrealtype aTol, sunrealtype rTol, double *G) 
-// {
-//     static SUNContext sunctx = nullptr;
-//     static bool initialized = false;
-//     if (!initialized)
-//     {
-//         int flag_ctx = SUNContext_Create(SUN_COMM_NULL, &sunctx);
-//         assert(flag_ctx >= 0);
-//         initialized = true;
-//     }
-
-//     const sunindextype NEQ = static_cast<sunindextype>(odes.neq());
-
-//     //get initial state
-//     N_Vector y = N_VNew_Serial(NEQ, sunctx);
-//     assert(y);
-//     sunrealtype *y_data = NV_DATA_S(y);
-//     odes.getState(y_data);
-
-//     //set parameters vector
-//     std::vector<sunrealtype> p(NEQ), pbar(NEQ, SUN_RCONST(1.0));
-//     for (sunindextype i = 0; i < NEQ; ++i)
-//         p[i] = y_data[i];
-
-//     std::vector<int> plist(NEQ);
-//     for (sunindextype j = 0; j < NEQ; ++j)
-//         plist[j] = static_cast<int>(j);
-
-//     //set sensitivity tolerances
-//     void *cvode_mem = CVodeCreate(CV_BDF, sunctx);
-//     assert(cvode_mem);
-//     int flag = CVodeInit(cvode_mem, RHS, SUN_RCONST(0.0), y);
-//     assert(flag >= 0);
-//     flag = CVodeSStolerances(cvode_mem, rTol, aTol);
-//     assert(flag >= 0);
-//     flag = CVodeSetUserData(cvode_mem, &odes);
-//     assert(flag >= 0);
-
-//     //solver and dense matrix
-//     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
-//     assert(A);
-//     SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
-//     assert(LS);
-//     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
-//     assert(flag >= 0);
-
-//     //grab sensitivities
-//     // flag = CVodeSetSensParams(cvode_mem, p.data(), pbar.data(), plist.data());
-//     const sunindextype Ns = NEQ;
-//     std::vector<N_Vector> yS(Ns);
-//     for (sunindextype j = 0; j < Ns; ++j)
-//     {
-//         yS[j] = N_VNew_Serial(NEQ, sunctx);
-//         assert(yS[j]);
-//         N_VConst(SUN_RCONST(0.0), yS[j]);
-//         NV_Ith_S(yS[j], j) = SUN_RCONST(1.0);
-//     }
-//     flag = CVodeSensInit(cvode_mem, Ns, CV_SIMULTANEOUS, /*fS=*/nullptr, yS.data());
-//     assert(flag >= 0);
-//     CVodeSetSensParams(cvode_mem, p.data(), /*pbar=*/nullptr, /*plist=*/nullptr);
-//     assert(flag >= 0);
-//     flag = CVodeSensEEtolerances(cvode_mem);
-//     assert(flag >= 0);
-//     flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
-//     assert(flag >= 0);
-//     flag = CVodeSetSensDQMethod(cvode_mem, CV_CENTERED, SUN_RCONST(0.0));
-//     assert(flag >= 0);
-
-//     //integrate and get sens.
-//     sunrealtype t = SUN_RCONST(0.0);
-//     flag = CVode(cvode_mem, dt, y, &t, CV_NORMAL);
-//     assert(flag >= 0);
-//     flag = CVodeGetSens(cvode_mem, &t, yS.data());
-//     assert(flag >= 0);
-
-//     //copy solution
-//     for (sunindextype j = 0; j < Ns; ++j)
-//     {
-//         const sunrealtype *Sj = NV_DATA_S(yS[j]);
-//         for (sunindextype i = 0; i < NEQ; ++i)
-//         {
-//             G[i + j * NEQ] = static_cast<double>(Sj[i]);
-//         }
-//     }
-
-//     //cleanup
-//     for (auto &v : yS)
-//     N_VDestroy(v);
-//     SUNLinSolFree(LS);
-//     SUNMatDestroy(A);
-//     CVodeFree(&cvode_mem);
-//     N_VDestroy(y);
-// }
-
 void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol, double *solution)
 {
     static SUNContext sunctx = nullptr;
@@ -421,14 +327,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     if (need[1] == 1)
     { // this block is called when a Jacobian is needed
-
-        // ////////////////////////////////////////////
-        // CVODES_SENSITIVITY(odes, dt, aTol, rTol, g);
-        // for (int i = 0; i < nx; ++i)
-        // {
-        //     g[i + i * nx] -= 1.0;
-        // }
-        // ////////////////////////////////////////////
 
             double xp[nx];
             double xm[nx];
