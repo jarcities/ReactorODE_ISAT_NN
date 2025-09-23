@@ -611,6 +611,9 @@ static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
+// ---- same includes & CVUserData / RHS as you have ----
+
+// Integrates ONCE; if JAC!=nullptr, fills JAC = ∂y(t)/∂y0 (column-major)
 void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, double rTol,
                                 double *solution, double *JAC /* = nullptr */)
 {
@@ -635,8 +638,8 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     flag = CVodeSStolerances(cvode_mem, rTol, aTol);
     assert(flag >= 0);
 
-    // No parameter vector: pass nullptr
-    CVUserData ud{&odes, /*p=*/nullptr, /*NP=*/0};
+    // user-data; p will be set below if sensitivities are requested
+    CVUserData ud{&odes, /*p*/ nullptr, /*NP*/ 0};
     flag = CVodeSetUserData(cvode_mem, &ud);
     assert(flag >= 0);
 
@@ -652,46 +655,67 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     assert(flag >= 0);
 
-    // Sensitivities w.r.t. initial conditions if JAC is requested
+    // --- Forward sensitivities via internal DQ (fS = NULL) ---
     N_Vector *yS = nullptr;
     int NS = 0;
+
+    // These must live until the integration finishes.
+    std::vector<sunrealtype> pvec; // dummy params (not used by your RHS)
+    std::vector<sunrealtype> pbar; // parameter scales
+
     if (JAC)
     {
         NS = (int)NEQ;
+
+        // 1) seed sensitivity ICs as identity (IC sensitivities)
         yS = N_VCloneVectorArray(NS, y);
         assert(yS);
         for (int i = 0; i < NS; ++i)
         {
             N_VConst(0.0, yS[i]);
-            NV_Ith_S(yS[i], i) = 1.0; // e_i
+            NV_Ith_S(yS[i], i) = 1.0;
         }
-        flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, NULL, yS);
+
+        // 2) provide a dummy parameter vector so internal DQ path is valid
+        pvec.assign(NS, 0.0); // values don't matter (RHS ignores p)
+        pbar.assign(NS, 1.0); // scale (positive)
+        ud.p = pvec.data();
+        ud.NP = NS;
+        flag = CVodeSetUserData(cvode_mem, &ud);
         assert(flag >= 0);
-        flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
+        flag = CVodeSetSensParams(cvode_mem, ud.p, pbar.data(), /*plist*/ nullptr);
+        assert(flag >= 0);
+
+        // 3) enable sensitivities with internal DQ (no custom fS)
+        flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, /*fS*/ NULL, yS);
         assert(flag >= 0);
         flag = CVodeSensEEtolerances(cvode_mem);
         assert(flag >= 0);
+        flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
+        assert(flag >= 0);
     }
 
+    // integrate once
     double t = 0.0;
     flag = CVode(cvode_mem, dt, y, &t, CV_NORMAL);
     assert(flag >= 0);
 
-    // Final state
+    // final state
     double *y_data = NV_DATA_S(y);
     for (sunindextype i = 0; i < NEQ; ++i)
         solution[i] = y_data[i];
 
-    // Copy sensitivities (column-major)
+    // copy sensitivities (column-major): JAC[j + i*NEQ] = ∂y_j(t)/∂y0_i
     if (JAC && NS > 0)
     {
         flag = CVodeGetSens(cvode_mem, &t, yS);
         assert(flag >= 0);
         for (int i = 0; i < NS; ++i)
             for (sunindextype j = 0; j < NEQ; ++j)
-                JAC[j + i * NEQ] = NV_Ith_S(yS[i], j); // ∂y_j(t)/∂y0_i
+                JAC[j + i * NEQ] = NV_Ith_S(yS[i], j);
     }
 
+    // cleanup
     if (yS)
         N_VDestroyVectorArray(yS, NS);
     N_VDestroy(y);
@@ -846,6 +870,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     ReactorODEs odes = ReactorODEs(sol);
 
     // integrate ONCE; ask for sensitivities only if Jacobian is needed
+    // ... after you've built odes, and before toxhat(f) ...
     const bool want_sens = (need[1] == 1);
     std::vector<double> solution_arr(nx, 0.0);
     std::vector<double> JAC; // column-major ∂y(t)/∂y0
@@ -856,19 +881,13 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         Jptr = JAC.data();
     }
 
-    double aTol = 1e-8; // could be rusr[2*nx]
-    double rTol = 1e-8; // could be rusr[2*nx+1]
-    double dt = rusr[2 * nx + 2];
-
     CVODES_INTEGRATE_WITH_SENS(odes, dt, aTol, rTol, solution_arr.data(), Jptr);
 
-    // f(x) = toxhat(y(t)) - x   (when mode != 2)
+    // f(x) = toxhat(y(t)) - x  (when mode != 2) — same as you had
     toxhat(solution_arr.data(), f, nx, rusr);
-
-    int mode = iusr[0];
     if (mode == 2)
     {
-        double fnn[100]; // nx<=100 per your arrays above
+        double fnn[100];
         myfnn(nx, x, fnn);
         for (int i = 0; i < nx; ++i)
             f[i] = f[i] - x[i] - fnn[i];
@@ -879,36 +898,32 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             f[i] = f[i] - x[i];
     }
 
-    // If Jacobian is requested: g = B * JAC * A - I
-    // (NOTE: for mode==2, this omits -∂(myfnn)/∂x; add it if/when you have the MLP Jacobian.)
+    // If Jacobian requested: g = B * JAC * A - I
     if (want_sens)
     {
-        // A = d(y0)/d(x) at ICs (ptcl)
+        // A = d(y0)/d(x) at ICs (ptcl from fromxhat)
+        std::vector<double> ptcl(nx);
+        fromxhat(x, ptcl.data(), nx, rusr);
         std::vector<double> A_diag(nx);
-        A_diag[0] = rusr[nx]; // dT/dx0
+        A_diag[0] = rusr[nx];
         for (int i = 1; i < nx; ++i)
-        {
-            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
-        }
+            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]);
 
-        // B = d(x_out)/d(y(t)) at final state (solution_arr)
+        // B = d(x)/d(y(t)) at final state (solution_arr)
         std::vector<double> B_diag(nx);
-        B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
+        B_diag[0] = 1.0 / rusr[nx];
         for (int i = 1; i < nx; ++i)
-        {
-            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
-        }
+            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i]));
 
-        // assemble column-major: g[row + col*nx] = Σ_k B_rowk * JAC_kcol * A_col (but B is diagonal)
+        // assemble (column-major)
         for (int col = 0; col < nx; ++col)
         {
             const double Acol = A_diag[col];
             for (int row = 0; row < nx; ++row)
             {
                 double val = B_diag[row] * JAC[row + col * nx] * Acol;
-                // subtract identity for the "-x" in f
                 if (row == col)
-                    val -= 1.0;
+                    val -= 1.0; // -I from f(...)-x
                 g[row + col * nx] = val;
             }
         }
