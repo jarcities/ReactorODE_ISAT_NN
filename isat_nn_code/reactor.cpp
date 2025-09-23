@@ -870,7 +870,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     ReactorODEs odes = ReactorODEs(sol);
 
     // integrate ONCE; ask for sensitivities only if Jacobian is needed
-    // ... after you've built odes, and before toxhat(f) ...
+    double aTol = 1e-8;           // or rusr[2*nx]
+    double rTol = 1e-8;           // or rusr[2*nx+1]
+    double dt = rusr[2 * nx + 2]; // integration horizon
+    int mode = iusr[0];           // your mode flag
+
+    // integrate ONCE; ask for sensitivities only if Jacobian is needed
     const bool want_sens = (need[1] == 1);
     std::vector<double> solution_arr(nx, 0.0);
     std::vector<double> JAC; // column-major ∂y(t)/∂y0
@@ -883,7 +888,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     CVODES_INTEGRATE_WITH_SENS(odes, dt, aTol, rTol, solution_arr.data(), Jptr);
 
-    // f(x) = toxhat(y(t)) - x  (when mode != 2) — same as you had
+    // f(x) = toxhat(y(t)) - x  (when mode != 2)
     toxhat(solution_arr.data(), f, nx, rusr);
     if (mode == 2)
     {
@@ -902,18 +907,16 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     if (want_sens)
     {
         // A = d(y0)/d(x) at ICs (ptcl from fromxhat)
-        std::vector<double> ptcl(nx);
-        fromxhat(x, ptcl.data(), nx, rusr);
         std::vector<double> A_diag(nx);
-        A_diag[0] = rusr[nx];
+        A_diag[0] = rusr[nx]; // dT/dx0
         for (int i = 1; i < nx; ++i)
-            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]);
+            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
 
         // B = d(x)/d(y(t)) at final state (solution_arr)
         std::vector<double> B_diag(nx);
-        B_diag[0] = 1.0 / rusr[nx];
+        B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
         for (int i = 1; i < nx; ++i)
-            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i]));
+            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
 
         // assemble (column-major)
         for (int col = 0; col < nx; ++col)
@@ -928,8 +931,6 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             }
         }
     }
-
-    // h(...) unused here
 }
 
 void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
