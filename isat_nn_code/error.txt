@@ -1,20 +1,26 @@
-(intel_cantera) [jsampayan4914@gpu004 isat_nn_code]$ ./main.exe 
-[ERROR][rank 0][/home/conda/feedstock_root/build_artifacts/sundials-split_1734770809444/work/sundials/src/cvodes/cvodes.c:5243][cvInitialSetup] p = NULL when using internal DQ for sensitivity RHS illegal.
-main.exe: reactor.cpp:678: void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &, double, double, double, double *, double *): Assertion `flag >= 0' failed.
-forrtl: error (76): Abort trap signal
-Image              PC                Routine            Line        Source             
-libc.so.6          000015554CE3EBF0  Unknown               Unknown  Unknown
-libc.so.6          000015554CE8BEDC  Unknown               Unknown  Unknown
-libc.so.6          000015554CE3EB46  raise                 Unknown  Unknown
-libc.so.6          000015554CE28833  abort                 Unknown  Unknown
-libc.so.6          000015554CE2875B  Unknown               Unknown  Unknown
-libc.so.6          000015554CE37886  Unknown               Unknown  Unknown
-main.exe           0000000000417161  Unknown               Unknown  Unknown
-main.exe           0000000000418416  Unknown               Unknown  Unknown
-main.exe           000000000041D73C  Unknown               Unknown  Unknown
-main.exe           000000000040D5C0  Unknown               Unknown  Unknown
-main.exe           000000000040776D  Unknown               Unknown  Unknown
-libc.so.6          000015554CE295D0  Unknown               Unknown  Unknown
-libc.so.6          000015554CE29680  __libc_start_main     Unknown  Unknown
-main.exe           0000000000407685  Unknown               Unknown  Unknown
-Aborted (core dumped)
+(intel_cantera) [jsampayan4914@gpu004 isat_nn_code]$ ./build.sh 
+rm: cannot remove '*.o': No such file or directory
+rm: cannot remove '*.mod': No such file or directory
+rm: cannot remove '*.exe': No such file or directory
+reactor.cpp:884:38: error: use of undeclared identifier 'dt'
+  884 |     CVODES_INTEGRATE_WITH_SENS(odes, dt, aTol, rTol, solution_arr.data(), Jptr);
+      |                                      ^
+reactor.cpp:884:42: error: use of undeclared identifier 'aTol'
+  884 |     CVODES_INTEGRATE_WITH_SENS(odes, dt, aTol, rTol, solution_arr.data(), Jptr);
+      |                                          ^
+reactor.cpp:884:48: error: use of undeclared identifier 'rTol'
+  884 |     CVODES_INTEGRATE_WITH_SENS(odes, dt, aTol, rTol, solution_arr.data(), Jptr);
+      |                                                ^
+reactor.cpp:888:9: error: use of undeclared identifier 'mode'; did you mean 'modf'?
+  888 |     if (mode == 2)
+      |         ^~~~
+      |         modf
+/cm/local/apps/gcc/13.1.0/lib/gcc/x86_64-linux-gnu/13.1.0/../../../../include/c++/13.1.0/math.h:54:12: note: 'modf' declared here
+   54 | using std::modf;
+      |            ^
+reactor.cpp:888:14: error: comparison between pointer and integer ('long double (*)(long double, long double *)' and 'int')
+  888 |     if (mode == 2)
+      |         ~~~~ ^  ~
+5 errors generated.
+ifx: error #10236: File not found: 'reactor.o'
+(intel_cantera) [jsampayan4914@gpu004 isat_nn_code]$ 
