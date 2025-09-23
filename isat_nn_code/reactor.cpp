@@ -611,8 +611,6 @@ static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-// Single wrapper: integrates once; optionally returns JAC = ∂y(t)/∂y0 in column-major
-// Pass JAC=nullptr to skip sensitivities.
 void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, double rTol,
                                 double *solution, double *JAC /* = nullptr */)
 {
@@ -628,7 +626,7 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     const sunindextype NEQ = (sunindextype)odes.neq();
     N_Vector y = N_VNew_Serial(NEQ, sunctx);
     assert(y);
-    odes.getState(NV_DATA_S(y)); // initial condition in y
+    odes.getState(NV_DATA_S(y));
 
     void *cvode_mem = CVodeCreate(CV_BDF, sunctx);
     assert(cvode_mem);
@@ -637,16 +635,15 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     flag = CVodeSStolerances(cvode_mem, rTol, aTol);
     assert(flag >= 0);
 
-    // user data (parameters hook preserved)
-    std::vector<sunrealtype> pvec = odes.params();
-    CVUserData ud{&odes, pvec.empty() ? nullptr : pvec.data(), (int)pvec.size()};
+    // No parameter vector: pass nullptr
+    CVUserData ud{&odes, /*p=*/nullptr, /*NP=*/0};
     flag = CVodeSetUserData(cvode_mem, &ud);
     assert(flag >= 0);
 
     flag = CVodeSetMaxNumSteps(cvode_mem, 50000);
     assert(flag >= 0);
     flag = CVodeSetMaxStep(cvode_mem, dt);
-    assert(flag >= 0); // single-step style
+    assert(flag >= 0);
 
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
     assert(A);
@@ -655,7 +652,7 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     assert(flag >= 0);
 
-    // sensitivities w.r.t. initial conditions, if requested
+    // Sensitivities w.r.t. initial conditions if JAC is requested
     N_Vector *yS = nullptr;
     int NS = 0;
     if (JAC)
@@ -680,26 +677,21 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     flag = CVode(cvode_mem, dt, y, &t, CV_NORMAL);
     assert(flag >= 0);
 
-    // copy final state
+    // Final state
     double *y_data = NV_DATA_S(y);
     for (sunindextype i = 0; i < NEQ; ++i)
         solution[i] = y_data[i];
 
-    // copy sensitivities, column-major: JAC[j + i*NEQ] = ∂y_j(t)/∂y0_i
+    // Copy sensitivities (column-major)
     if (JAC && NS > 0)
     {
         flag = CVodeGetSens(cvode_mem, &t, yS);
         assert(flag >= 0);
         for (int i = 0; i < NS; ++i)
-        {
             for (sunindextype j = 0; j < NEQ; ++j)
-            {
-                JAC[j + i * NEQ] = NV_Ith_S(yS[i], j);
-            }
-        }
+                JAC[j + i * NEQ] = NV_Ith_S(yS[i], j); // ∂y_j(t)/∂y0_i
     }
 
-    // cleanup
     if (yS)
         N_VDestroyVectorArray(yS, NS);
     N_VDestroy(y);
