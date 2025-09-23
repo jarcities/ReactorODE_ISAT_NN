@@ -676,6 +676,9 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
             NV_Ith_S(yS[i], i) = 1.0;
         }
 
+        flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, /*fS*/ NULL, yS);
+        assert(flag >= 0);
+
         // 2) provide a dummy parameter vector so internal DQ path is valid
         pvec.assign(NS, 0.0); // values don't matter (RHS ignores p)
         pbar.assign(NS, 1.0); // scale (positive)
@@ -687,8 +690,7 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
         assert(flag >= 0);
 
         // 3) enable sensitivities with internal DQ (no custom fS)
-        flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, /*fS*/ NULL, yS);
-        assert(flag >= 0);
+        
         flag = CVodeSensEEtolerances(cvode_mem);
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
