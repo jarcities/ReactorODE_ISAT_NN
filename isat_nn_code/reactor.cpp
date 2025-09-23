@@ -85,6 +85,97 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol, do
     SUNLinSolFree(LS);
 }
 
+/////////////////////////////////////////////////////////////////////////
+void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, double rTol, double *solution, bool SENS)
+{
+    static SUNContext sunctx = nullptr;
+    static bool initialized = false;
+
+    if (!initialized)
+    {
+        int flag = SUNContext_Create(SUN_COMM_NULL, &sunctx);
+        assert(flag >= 0);
+        initialized = true;
+    }
+
+    size_t NEQ = odes.neq();
+
+    N_Vector y = N_VNew_Serial(NEQ, sunctx);
+    assert(y);
+    double *y_data = NV_DATA_S(y);
+    odes.getState(y_data);
+
+    void *cvode_mem = CVodeCreate(CV_BDF, sunctx);
+    assert(cvode_mem);
+
+    double t0 = 0.0;
+    double t = t0;
+    int flag = CVodeInit(cvode_mem, RHS, t0, y);
+    assert(flag >= 0);
+
+    flag = CVodeSStolerances(cvode_mem, rTol, aTol);
+    assert(flag >= 0);
+    flag = CVodeSetUserData(cvode_mem, &odes);
+    assert(flag >= 0);
+    flag = CVodeSetMaxNumSteps(cvode_mem, 50000);
+    assert(flag >= 0);
+    flag = CVodeSetMaxStep(cvode_mem, 1e-6); // dt or 1e-6
+    assert(flag >= 0);
+
+    SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
+    assert(A);
+    SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
+    assert(LS);
+    flag = CVodeSetLinearSolver(cvode_mem, LS, A);
+    assert(flag >= 0);
+
+    //set sensitivity stuff
+    if (SENS)
+    {
+        size_t NS = odes.neq();
+        size_t NEQ = odes.neq();
+        y = N_VNew_Serial(NEQ, sunctx);
+        N_Vector* yS = N_VCloneVectorArray(NS, y);
+        assert(yS);
+        sunrealtype *ySdata = N_VGetArrayPointer(yS);
+        flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, NULL, yS);
+        assert(flag >= 0);
+        flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
+        assert(flag >= 0);
+        flag = CVodeSensEEtolerances(cvode_mem);
+        assert(flag >= 0);
+        flag = CVodeSetSensParams(cvode_mem, NULL, NULL, NULL);
+        assert(flag >= 0);
+    }
+
+    // integrate
+    flag = CVode(cvode_mem, dt, y, &t, CV_NORMAL);
+    assert(flag >= 0);
+
+    //get sensitivity
+    if (SENS)
+    {
+        flag = CVodeGetSens(cvode_mem, &t, yS);
+    }
+
+    // copy solution
+    for (size_t i = 0; i < NEQ; i++)
+    {
+        solution[i] = y_data[i];
+    }
+
+    // cleanup
+    N_VDestroy(y);
+    if (SENS)
+    {
+        N_VDestroyVectorArray(yS, NS);
+    }
+    CVodeFree(&cvode_mem);
+    SUNMatDestroy(A);
+    SUNLinSolFree(LS);
+}
+/////////////////////////////////////////////////////////////////////////
+
 namespace Gl
 {
 
@@ -324,94 +415,98 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     if (need[1] == 1)
-    { // this block is called when a Jacobian is needed
-
-            double xp[nx];
-            double xm[nx];
-            double fp[nf];
-            double fm[nf];
-
-            for (int ii = 0; ii < nx; ii++)
-            {
-
-                for (int jj = 0; jj < nx; jj++)
-                {
-                    xp[jj] = x[jj];
-                    xm[jj] = x[jj];
-                }
-
-                xp[ii] += dx;
-                xm[ii] -= dx;
-
-                tnow = 0.0;
-                fromxhat(xp, ptcl, nx, rusr);
-                T[0] = ptcl[0];
-                for (int ii = 1; ii < nx; ii++)
-                {
-                    Y[ii - 1] = ptcl[ii];
-                }
-                gas->setState_TPY(T[0], p, Y);
-                ReactorODEs odes_p = ReactorODEs(sol);
-                /////////////////////////////////////////////////////////
-                double solution_arr_p[nx];
-                CVODES_INTEGRATE(odes_p, dt, aTol, rTol, solution_arr_p);
-                /////////////////////////////////////////////////////////
-                toxhat(solution_arr_p, fp, nx, rusr);
-                if (mode == 2)
-                {
-                    myfnn(nx, xp, fnn);
-                    for (int ii = 0; ii < nx; ii++)
-                    {
-                        fp[ii] = fp[ii] - xp[ii] - fnn[ii];
-                    }
-                }
-                // evaluate f(x) at x+dx in the jj+1-th entry of x
-                else
-                {
-                    for (int ii = 0; ii < nx; ii++)
-                    {
-                        fp[ii] = fp[ii] - xp[ii];
-                    }
-                }
-
-                tnow = 0.0;
-                fromxhat(xm, ptcl, nx, rusr);
-                T[0] = ptcl[0];
-                for (int ii = 1; ii < nx; ii++)
-                {
-                    Y[ii - 1] = ptcl[ii];
-                }
-                gas->setState_TPY(T[0], p, Y);
-                ReactorODEs odes_m = ReactorODEs(sol);
-                /////////////////////////////////////////////////////////
-                double solution_arr_m[nx];
-                CVODES_INTEGRATE(odes_m, dt, aTol, rTol, solution_arr_m);
-                /////////////////////////////////////////////////////////
-                toxhat(solution_arr_m, fm, nx, rusr);
-                if (mode == 2)
-                {
-                    myfnn(nx, xm, fnn);
-                    for (int ii = 0; ii < nx; ii++)
-                    {
-                        fm[ii] = fm[ii] - xm[ii] - fnn[ii];
-                    }
-                }
-                // evaluate f(x) at x-dx in the jj+1-th entry of x
-                else
-                {
-                    for (int ii = 0; ii < nx; ii++)
-                    {
-                        fm[ii] = fm[ii] - xm[ii];
-                    }
-                }
-
-                for (int jj = 0; jj < nx; jj++)
-                {
-                    g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
-                }
-                // calculate the jj+1-th partial derivative
-            }
+    {
+        //TODO: implement CVODES_INTEGRATE_WITH_SENS to get g mode = 3, mode != 2
     }
+    // if (need[1] == 1)
+    // { // this block is called when a Jacobian is needed
+
+    //     double xp[nx];
+    //     double xm[nx];
+    //     double fp[nf];
+    //     double fm[nf];
+
+    //     for (int ii = 0; ii < nx; ii++)
+    //     {
+
+    //         for (int jj = 0; jj < nx; jj++)
+    //         {
+    //             xp[jj] = x[jj];
+    //             xm[jj] = x[jj];
+    //         }
+
+    //         xp[ii] += dx;
+    //         xm[ii] -= dx;
+
+    //         tnow = 0.0;
+    //         fromxhat(xp, ptcl, nx, rusr);
+    //         T[0] = ptcl[0];
+    //         for (int ii = 1; ii < nx; ii++)
+    //         {
+    //             Y[ii - 1] = ptcl[ii];
+    //         }
+    //         gas->setState_TPY(T[0], p, Y);
+    //         ReactorODEs odes_p = ReactorODEs(sol);
+    //         /////////////////////////////////////////////////////////
+    //         double solution_arr_p[nx];
+    //         CVODES_INTEGRATE(odes_p, dt, aTol, rTol, solution_arr_p);
+    //         /////////////////////////////////////////////////////////
+    //         toxhat(solution_arr_p, fp, nx, rusr);
+    //         if (mode == 2)
+    //         {
+    //             myfnn(nx, xp, fnn);
+    //             for (int ii = 0; ii < nx; ii++)
+    //             {
+    //                 fp[ii] = fp[ii] - xp[ii] - fnn[ii];
+    //             }
+    //         }
+    //         // evaluate f(x) at x+dx in the jj+1-th entry of x
+    //         else
+    //         {
+    //             for (int ii = 0; ii < nx; ii++)
+    //             {
+    //                 fp[ii] = fp[ii] - xp[ii];
+    //             }
+    //         }
+
+    //         tnow = 0.0;
+    //         fromxhat(xm, ptcl, nx, rusr);
+    //         T[0] = ptcl[0];
+    //         for (int ii = 1; ii < nx; ii++)
+    //         {
+    //             Y[ii - 1] = ptcl[ii];
+    //         }
+    //         gas->setState_TPY(T[0], p, Y);
+    //         ReactorODEs odes_m = ReactorODEs(sol);
+    //         /////////////////////////////////////////////////////////
+    //         double solution_arr_m[nx];
+    //         CVODES_INTEGRATE(odes_m, dt, aTol, rTol, solution_arr_m);
+    //         /////////////////////////////////////////////////////////
+    //         toxhat(solution_arr_m, fm, nx, rusr);
+    //         if (mode == 2)
+    //         {
+    //             myfnn(nx, xm, fnn);
+    //             for (int ii = 0; ii < nx; ii++)
+    //             {
+    //                 fm[ii] = fm[ii] - xm[ii] - fnn[ii];
+    //             }
+    //         }
+    //         // evaluate f(x) at x-dx in the jj+1-th entry of x
+    //         else
+    //         {
+    //             for (int ii = 0; ii < nx; ii++)
+    //             {
+    //                 fm[ii] = fm[ii] - xm[ii];
+    //             }
+    //         }
+
+    //         for (int jj = 0; jj < nx; jj++)
+    //         {
+    //             g[jj + ii * (nx)] = 1.0 * (fp[jj] - fm[jj]) / (2 * dx);
+    //         }
+    //         // calculate the jj+1-th partial derivative
+    //     }
+    // }
 }
 
 void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
