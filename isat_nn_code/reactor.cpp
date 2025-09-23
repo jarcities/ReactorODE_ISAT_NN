@@ -70,9 +70,7 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol, do
 
     // integrate
     flag = CVode(cvode_mem, dt, y, &t, CV_NORMAL);
-    if (flag < 0)
-    {
-    }
+    assert(flag >= 0);
 
     // copy solution
     for (size_t i = 0; i < NEQ; i++)
