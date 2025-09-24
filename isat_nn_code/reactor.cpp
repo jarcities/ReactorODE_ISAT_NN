@@ -342,8 +342,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // std::vector<double> SOL(nx, 0.0);
     double SOL[nx];
     // std::vector<double> JAC;
-    // double JAC;
-    double *JAC_ptr = nullptr;
+    double JAC[nx * nx];
+    // double *JAC_ptr = nullptr;
 
     // init first
     static int aaaa;
@@ -356,7 +356,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // ic -> normalize
     // std::vector<double> ptcl(nx);
     double ptcl[nx];
-    fromxhat(x, ptcl.data(), nx, rusr);
+    fromxhat(x, ptcl, nx, rusr);
 
     // get T and Y
     double T = ptcl[0];
@@ -367,21 +367,21 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     // set state and build RHS
     double p = rusr[2 * nx + 4];
-    gas->setState_TPY(T, p, Y.data());
+    gas->setState_TPY(T, p, Y);
     ReactorODEs odes = ReactorODEs(sol);
 
-    // init jacobian vector
-    if (need[1] == 1)
-    {
-        double JAC[nx * nx];
-        // JAC.resize(nx * nx, 0.0);
-        JAC_ptr = JAC.data();
-    }
+    // // init jacobian vector
+    // if (need[1] == 1)
+    // {
+    //     double JAC[nx * nx];
+    //     // JAC.resize(nx * nx, 0.0);
+    //     JAC_ptr = JAC.data();
+    // }
 
     /////////////////////////////////////////////////////////////////////
     // integrate
-    CVODES_INTEGRATE(odes, dt, aTol, rTol, SOL.data(), JAC_ptr);
-    toxhat(SOL.data(), f, nx, rusr);
+    CVODES_INTEGRATE(odes, dt, aTol, rTol, SOL, JAC);
+    toxhat(SOL, f, nx, rusr);
     /////////////////////////////////////////////////////////////////////
 
     if (mode == 2)
