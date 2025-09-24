@@ -944,46 +944,67 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
 void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
 {
-    // conserve mass and energy
-    std::vector<double> Y1(nx - 1), Y2(nx - 1);
-    double T1 = ptcl1[0], T2 = ptcl2[0];
-    for (int i = 1; i < nx; ++i)
+    // mix two particles, conserving mass and energy
+
+    double Y1[nx - 1], Y2[nx - 1]; // mass fractions
+    double H1, H2;                 // enthalpies
+    double T1[1], T2[1];           // temperatures
+    double d;                      // work variable
+    double p = OneAtm;             // rusr[2*nx+4];
+
+    T1[0] = ptcl1[0];
+    for (int ii = 1; ii < nx; ii++)
     {
-        Y1[i - 1] = ptcl1[i];
-        Y2[i - 1] = ptcl2[i];
+        Y1[ii - 1] = ptcl1[ii];
+    }
+    T2[0] = ptcl2[0];
+    for (int ii = 1; ii < nx; ii++)
+    {
+        Y2[ii - 1] = ptcl2[ii];
+    }
+    // extract temperature and mass fractios for the two particles
+
+    gas->setState_TPY(T1[0], p, Y1); // initialize the gas to the state of the first particle
+
+    H1 = gas->enthalpy_mass(); // get the enthalpy of the first particle
+
+    gas->setState_TPY(T2[0], p, Y2); // initialize the gas to the state of the second particle
+
+    H2 = gas->enthalpy_mass(); // get the enthalpy of the second particle
+
+    d = H2 - H1;
+    H1 += alpha[0] * d;
+    H2 -= alpha[0] * d; // mix enthalpies
+    // alpha is amount by which to mix the particles (0 is no mixing, 0.5 is complete mixing)
+
+    for (int ii = 0; ii < nx - 1; ii++)
+    {
+        d = Y2[ii] - Y1[ii];
+        Y1[ii] += alpha[0] * d;
+        Y2[ii] -= alpha[0] * d; // mix mass fractions
     }
 
-    double p = OneAtm; // or rusr[2*nx+4]
-    gas->setState_TPY(T1, p, Y1.data());
-    double H1 = gas->enthalpy_mass();
-    gas->setState_TPY(T2, p, Y2.data());
-    double H2 = gas->enthalpy_mass();
+    d = alpha[0] * (T2 - T1);
 
-    double dH = H2 - H1;
-    H1 += alpha[0] * dH;
-    H2 -= alpha[0] * dH;
-
-    for (int i = 0; i < nx - 1; ++i)
-    {
-        double dY = Y2[i] - Y1[i];
-        Y1[i] += alpha[0] * dY;
-        Y2[i] -= alpha[0] * dY;
-    }
-
-    double dT = alpha[0] * (T2 - T1);
-
-    gas->setState_TPY(T1 + dT, p, Y1.data());
+    gas->setState_TPY(T1[0] + d, p, Y1);
     gas->setState_HP(H1, p);
-    T1 = gas->temperature();
 
-    gas->setState_TPY(T2 - dT, p, Y2.data());
+    T1[0] = gas->temperature();
+
+    gas->setState_TPY(T2[0] - d, p, Y2);
     gas->setState_HP(H2, p);
-    T2 = gas->temperature();
 
-    ptcl1[0] = T1;
-    for (int i = 1; i < nx; ++i)
-        ptcl1[i] = Y1[i - 1];
-    ptcl2[0] = T2;
-    for (int i = 1; i < nx; ++i)
-        ptcl2[i] = Y2[i - 1];
+    T2[0] = gas->temperature(); // set the particle's thermodynamic states to the new mixed values, and
+    // extract the corresponding temperatures
+
+    ptcl1[0] = T1[0];
+    for (int ii = 1; ii < nx; ii++)
+    {
+        ptcl1[ii] = Y1[ii - 1];
+    }
+    ptcl2[0] = T2[0];
+    for (int ii = 1; ii < nx; ii++)
+    {
+        ptcl2[ii] = Y2[ii - 1];
+    } // pass the new temperatures and mass fractions to the output
 }
