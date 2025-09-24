@@ -16,6 +16,87 @@
 
 using namespace Cantera;
 
+namespace Gl
+{
+
+    shared_ptr<Solution> sol;    //= newSolution("h2o2.yaml", "ohmech", "none");
+    shared_ptr<ThermoPhase> gas; //= sol->thermo();
+
+    int nLayers = 6;   // number of MLP layers
+    int nNeurons = 10; // number of neurons in each hidden layer
+    int nx = 11;       // number of input/output variables
+
+    int ia[100];
+    int ib[100];
+    int n1[100];
+    int n2[100];
+
+    double A[1000000];
+    double b[10000]; // lines 15 to 21 are work variables for reading in the MLP weights
+
+    void initfgh()
+    {
+
+        sol = newSolution("h2o2.yaml", "ohmech", "none"); // initialize the Cantera gas object,
+        // the inputs can be modified to change the chemical mechanism
+        gas = sol->thermo();
+    }
+
+    void initfnn()
+    { // initialize the weights for the f^{MLP} function
+
+        int i1 = 0;
+        int i2 = 0; // work variables for reading in the MLP weights
+
+        char file1[50];
+        char file2[50];
+
+        for (int ll = 1; ll <= nLayers; ll++)
+        {
+
+            ia[ll - 1] = i1;
+            ib[ll - 1] = i2;
+
+            sprintf(file1, "./A%d.csv", ll);
+            sprintf(file2, "./B%d.csv", ll);
+
+            n1[ll - 1] = nNeurons;
+            n2[ll - 1] = nNeurons;
+            if (ll == 1)
+            {
+                n1[ll - 1] = nx;
+            }
+            if (ll == nLayers)
+            {
+                n2[ll - 1] = nx;
+            }
+
+            FILE *pFile;
+            float a;
+            pFile = fopen(file1, "r+");
+            for (int ii = 0; ii < n1[ll - 1] * n2[ll - 1]; ii++)
+            {
+                fscanf(pFile, "%f", &a);
+                A[i1] = a;
+                i1 = i1 + 1;
+            }
+            fclose(pFile);
+
+            pFile = fopen(file2, "r+");
+            for (int ii = 0; ii < n2[ll - 1]; ii++)
+            {
+                fscanf(pFile, "%f", &a);
+                b[i2] = a;
+                i2 = i2 + 1;
+            }
+            fclose(pFile);
+        }
+    }
+
+}
+
+using namespace Gl;
+
 //////////////////////
 struct CVUserData
 {
@@ -150,87 +231,6 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     SUNLinSolFree(LS);
 }
 ////////////////////////////////////////////////////////////////////////////////////////
-
-namespace Gl
-{
-
-    shared_ptr<Solution> sol;    //= newSolution("h2o2.yaml", "ohmech", "none");
-    shared_ptr<ThermoPhase> gas; //= sol->thermo();
-
-    int nLayers = 6;   // number of MLP layers
-    int nNeurons = 10; // number of neurons in each hidden layer
-    int nx = 11;       // number of input/output variables
-
-    int ia[100];
-    int ib[100];
-    int n1[100];
-    int n2[100];
-
-    double A[1000000];
-    double b[10000]; // lines 15 to 21 are work variables for reading in the MLP weights
-
-    void initfgh()
-    {
-
-        sol = newSolution("h2o2.yaml", "ohmech", "none"); // initialize the Cantera gas object,
-        // the inputs can be modified to change the chemical mechanism
-        gas = sol->thermo();
-    }
-
-    void initfnn()
-    { // initialize the weights for the f^{MLP} function
-
-        int i1 = 0;
-        int i2 = 0; // work variables for reading in the MLP weights
-
-        char file1[50];
-        char file2[50];
-
-        for (int ll = 1; ll <= nLayers; ll++)
-        {
-
-            ia[ll - 1] = i1;
-            ib[ll - 1] = i2;
-
-            sprintf(file1, "./A%d.csv", ll);
-            sprintf(file2, "./B%d.csv", ll);
-
-            n1[ll - 1] = nNeurons;
-            n2[ll - 1] = nNeurons;
-            if (ll == 1)
-            {
-                n1[ll - 1] = nx;
-            }
-            if (ll == nLayers)
-            {
-                n2[ll - 1] = nx;
-            }
-
-            FILE *pFile;
-            float a;
-            pFile = fopen(file1, "r+");
-            for (int ii = 0; ii < n1[ll - 1] * n2[ll - 1]; ii++)
-            {
-                fscanf(pFile, "%f", &a);
-                A[i1] = a;
-                i1 = i1 + 1;
-            }
-            fclose(pFile);
-
-            pFile = fopen(file2, "r+");
-            for (int ii = 0; ii < n2[ll - 1]; ii++)
-            {
-                fscanf(pFile, "%f", &a);
-                b[i2] = a;
-                i2 = i2 + 1;
-            }
-            fclose(pFile);
-        }
-    }
-
-}
-
-using namespace Gl;
 
 //"custom.hpp" is the ReactorODEs class from lines 21-147 of the file "custom.cpp" which can be found
 // at this URL: https://cantera.org/3.1/examples/cxx/custom.html (retrieved 06/05/2025)
