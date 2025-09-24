@@ -1,34 +1,34 @@
-//#include "reactor.hpp"
-//#include "custom.hpp"
-//#include <cmath>
-//#include <cvodes/cvodes.h>
-//#include <nvector/nvector_serial.h>
-//#include <sunmatrix/sunmatrix_dense.h>
-//#include <sunlinsol/sunlinsol_dense.h>
-//#include <sundials/sundials_types.h>
-//#include <sundials/sundials_context.h>
-//#include <cassert>
-//#include <sundials/sundials_types.h> //ADDED
+// #include "reactor.hpp"
+// #include "custom.hpp"
+// #include <cmath>
+// #include <cvodes/cvodes.h>
+// #include <nvector/nvector_serial.h>
+// #include <sunmatrix/sunmatrix_dense.h>
+// #include <sunlinsol/sunlinsol_dense.h>
+// #include <sundials/sundials_types.h>
+// #include <sundials/sundials_context.h>
+// #include <cassert>
+// #include <sundials/sundials_types.h> //ADDED
 
-//#ifndef SUN_COMM_NULL
-//#define SUN_COMM_NULL NULL
-//#endif
+// #ifndef SUN_COMM_NULL
+// #define SUN_COMM_NULL NULL
+// #endif
 
-//using namespace Cantera;
+// using namespace Cantera;
 
-//static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
+// static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 //{
-//    ReactorODEs *odes = static_cast<ReactorODEs *>(user_data);
-//    double *y_data = NV_DATA_S(y);
-//    double *yd_data = NV_DATA_S(ydot);
-//    odes->eval((double)t, y_data, yd_data, nullptr); //nullptr for p parameter
-//    return 0;
-//}
+//     ReactorODEs *odes = static_cast<ReactorODEs *>(user_data);
+//     double *y_data = NV_DATA_S(y);
+//     double *yd_data = NV_DATA_S(ydot);
+//     odes->eval((double)t, y_data, yd_data, nullptr); //nullptr for p parameter
+//     return 0;
+// }
 
-//void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol, double *solution)
+// void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol, double *solution)
 //{
-//    static SUNContext sunctx = nullptr;
-//    static bool initialized = false;
+//     static SUNContext sunctx = nullptr;
+//     static bool initialized = false;
 
 //    if (!initialized)
 //    {
@@ -86,10 +86,10 @@
 //}
 
 ///////////////////////////////////////////////////////////////////////////
-//void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, double rTol, double *solution, bool SENS)
+// void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, double rTol, double *solution, bool SENS)
 //{
-//    static SUNContext sunctx = nullptr;
-//    static bool initialized = false;
+//     static SUNContext sunctx = nullptr;
+//     static bool initialized = false;
 
 //    if (!initialized)
 //    {
@@ -176,7 +176,7 @@
 //}
 ///////////////////////////////////////////////////////////////////////////
 
-//namespace Gl
+// namespace Gl
 //{
 
 //    shared_ptr<Solution> sol;    //= newSolution("h2o2.yaml", "ohmech", "none");
@@ -255,16 +255,16 @@
 
 //}
 
-//using namespace Gl;
+// using namespace Gl;
 
 ////"custom.hpp" is the ReactorODEs class from lines 21-147 of the file "custom.cpp" which can be found
 ////at this URL: https://cantera.org/3.1/examples/cxx/custom.html (retrieved 06/05/2025)
 
-//void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
+// void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
 //{
-//    //this function converts the normalized vector x into temperature and mass fractions for one particle
-//    //x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
-//    //rusr[] are user-supplied normalization variables
+//     //this function converts the normalized vector x into temperature and mass fractions for one particle
+//     //x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
+//     //rusr[] are user-supplied normalization variables
 
 //    ptcl[0] = (x[0] * rusr[nx]) + rusr[0]; //ptcl[0] is the temperature, in K
 
@@ -276,11 +276,11 @@
 //    }
 //}
 
-//void toxhat(double ptcl[], double x[], int &nx, double rusr[])
+// void toxhat(double ptcl[], double x[], int &nx, double rusr[])
 //{
-//    //this function converts a particle's temperature and mass fractions into the normalized vector x
-//    //x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
-//    //rusr[] are user-supplied normalization variables
+//     //this function converts a particle's temperature and mass fractions into the normalized vector x
+//     //x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
+//     //rusr[] are user-supplied normalization variables
 
 //    x[0] = (ptcl[0] - rusr[0]) / rusr[nx]; //x[0] is the normalized temperature
 
@@ -292,16 +292,16 @@
 //    }
 //}
 
-//double fAct(double x)
+// double fAct(double x)
 //{ //activation function of the hidden layers,
-//    //here a Mish function is used
+//     //here a Mish function is used
 
 //    return x * tanh(log(1.0 + exp(x)));
 //}
 
-//void myfnn(int &nx, double x[], double fnn[])
+// void myfnn(int &nx, double x[], double fnn[])
 //{
-//    //this function evaluates f^{}
+//     //this function evaluates f^{}
 
 //    static int bbbb; //dummy variable used to call "initfnn" the first time "myfnn" is called
 
@@ -351,8 +351,8 @@
 //}
 
 ////myfgh is the function passed to ISAT
-//void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
-//           double rusr[], double f[], double g[], double h[])
+// void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
+//            double rusr[], double f[], double g[], double h[])
 //{
 
 //    double Y[nx - 1];             //mass fraction
@@ -509,9 +509,9 @@
 //    //}
 //}
 
-//void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
+// void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
 //{
-//    //mix two particles, conserving mass and energy
+//     //mix two particles, conserving mass and energy
 
 //    double Y1[nx - 1], Y2[nx - 1]; //mass fractions
 //    double H1, H2;                 //enthalpies
@@ -625,13 +625,13 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
         initialized = true;
     }
 
-    //num of equations and solution vector
+    // num of equations and solution vector
     const sunindextype NEQ = (sunindextype)odes.neq();
     N_Vector y = N_VNew_Serial(NEQ, sunctx);
     assert(y);
     odes.getState(NV_DATA_S(y));
 
-    //create/init SUNDIAL solver and set tolerances
+    // create/init SUNDIAL solver and set tolerances
     void *cvode_mem = CVodeCreate(CV_BDF, sunctx);
     assert(cvode_mem);
     int flag = CVodeInit(cvode_mem, RHS, 0.0, y);
@@ -639,18 +639,18 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     flag = CVodeSStolerances(cvode_mem, rTol, aTol);
     assert(flag >= 0);
 
-    //set user data (ode, params, num params)
+    // set user data (ode, params, num params)
     CVUserData ud{&odes, nullptr, 0};
     flag = CVodeSetUserData(cvode_mem, &ud);
     assert(flag >= 0);
 
-    //set max time steps
+    // set max time steps
     flag = CVodeSetMaxNumSteps(cvode_mem, 50000);
     assert(flag >= 0);
     flag = CVodeSetMaxStep(cvode_mem, dt);
     assert(flag >= 0);
 
-    //set linear solver (dense data structures)
+    // set linear solver (dense data structures)
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
     assert(A);
     SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
@@ -658,11 +658,11 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     assert(flag >= 0);
 
-    //init sens stuff
+    // init sens stuff
     N_Vector *yS = nullptr;
     int NS = 0;
 
-    //dummy variables
+    // dummy variables
     std::vector<sunrealtype> pvec;
     std::vector<sunrealtype> pbar;
 
@@ -670,7 +670,7 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     {
         NS = (int)NEQ;
 
-        //1) seed sensitivity ICs as identity (IC sensitivities)
+        // 1) seed sensitivity ICs as identity (IC sensitivities)
         yS = N_VCloneVectorArray(NS, y);
         assert(yS);
         for (int i = 0; i < NS; ++i)
@@ -682,9 +682,9 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
         flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, /*fS*/ NULL, yS);
         assert(flag >= 0);
 
-        //2) provide a dummy parameter vector so internal DQ path is valid
-        pvec.assign(NS, 0.0); //values don't matter (RHS ignores p)
-        pbar.assign(NS, 1.0); //scale (positive)
+        // 2) provide a dummy parameter vector so internal DQ path is valid
+        pvec.assign(NS, 0.0); // values don't matter (RHS ignores p)
+        pbar.assign(NS, 1.0); // scale (positive)
         ud.p = pvec.data();
         ud.NP = NS;
         flag = CVodeSetUserData(cvode_mem, &ud);
@@ -692,7 +692,7 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
         flag = CVodeSetSensParams(cvode_mem, ud.p, pbar.data(), /*plist*/ nullptr);
         assert(flag >= 0);
 
-        //3) enable sensitivities with internal DQ (no custom fS)
+        // 3) enable sensitivities with internal DQ (no custom fS)
 
         flag = CVodeSensEEtolerances(cvode_mem);
         assert(flag >= 0);
@@ -700,17 +700,17 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
         assert(flag >= 0);
     }
 
-    //integrate once
+    // integrate once
     double t = 0.0;
     flag = CVode(cvode_mem, dt, y, &t, CV_NORMAL);
     assert(flag >= 0);
 
-    //final state
+    // final state
     double *y_data = NV_DATA_S(y);
     for (sunindextype i = 0; i < NEQ; ++i)
         solution[i] = y_data[i];
 
-    //copy sensitivities (column-major): JAC[j + i*NEQ] = ∂y_j(t)/∂y0_i
+    // copy sensitivities (column-major): JAC[j + i*NEQ] = ∂y_j(t)/∂y0_i
     if (JAC && NS > 0)
     {
         flag = CVodeGetSens(cvode_mem, &t, yS);
@@ -720,7 +720,7 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
                 JAC[j + i * NEQ] = NV_Ith_S(yS[i], j);
     }
 
-    //cleanup
+    // cleanup
     if (yS)
         N_VDestroyVectorArray(yS, NS);
     N_VDestroy(y);
@@ -793,7 +793,7 @@ namespace Gl
 
 using namespace Gl;
 
-//helpers (same formulas you already had)
+// helpers (same formulas you already had)
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
 {
     ptcl[0] = (x[0] * rusr[nx]) + rusr[0];
@@ -848,24 +848,25 @@ void myfnn(int &nx, double x[], double fnn[])
         fnn[kk] = x2[kk];
 }
 
-//myfgh is the function passed to ISAT
+// myfgh is the function passed to ISAT
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
-    //double Y[nx - 1];             //mass fraction
-    //double T[1];                  //temperature
-    //double ptcl[nx];              //particle properties
-    double aTol = 1e-8;           //rusr[2*nx];
-    double rTol = 1e-8;           //rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
-    double dt = rusr[2 * nx + 2]; //time step over which to integrate
-    //double dx = rusr[2 * nx + 3]; //spatial increment in x for Jacobian evaluation
-    //double p = rusr[2 * nx + 4];  //user-specified pressure
+    // double Y[nx - 1];             //mass fraction
+    // double T[1];                  //temperature
+    // double ptcl[nx];              //particle properties
+    double aTol = 1e-8;           // rusr[2*nx];
+    double rTol = 1e-8;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
+    double dt = rusr[2 * nx + 2]; // time step over which to integrate
+    // double dx = rusr[2 * nx + 3]; //spatial increment in x for Jacobian evaluation
+    // double p = rusr[2 * nx + 4];  //user-specified pressure
     int mode = iusr[0];
-    //double fnn[nx]; //f^{MLP}
+    // double fnn[nx]; //f^{MLP}
     std::vector<double> solution_arr(nx, 0.0);
-    std::vector<double> JAC; 
+    std::vector<double> JAC;
+    double *JAC_ptr = nullptr;
 
-    //init first
+    // init first
     static int aaaa;
     if (aaaa != 7777)
     {
@@ -873,35 +874,29 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         aaaa = 7777;
     }
 
-    //ic -> normalize
+    // ic -> normalize
     std::vector<double> ptcl(nx);
     fromxhat(x, ptcl.data(), nx, rusr);
 
-    //get T and Y
+    // get T and Y
     double T = ptcl[0];
     std::vector<double> Y(nx - 1);
     for (int i = 1; i < nx; ++i)
         Y[i - 1] = ptcl[i];
 
-    //set state and build RHS
+    // set state and build RHS
     double p = rusr[2 * nx + 4];
     gas->setState_TPY(T, p, Y.data());
     ReactorODEs odes = ReactorODEs(sol);
 
-    ////integrate ONCE; ask for sensitivities only if Jacobian is needed
-    //double aTol = 1e-8;           //or rusr[2*nx]
-    //double rTol = 1e-8;           //or rusr[2*nx+1]
-    //double dt = rusr[2 * nx + 2]; //integration horizon
-    //int mode = iusr[0];           //your mode flag
-    
-    double *JAC_ptr = nullptr;
+    // init jacobian vector
     if (need[1] == 1)
     {
         JAC.resize(nx * nx, 0.0);
         JAC_ptr = JAC.data();
     }
 
-    //integrate
+    // integrate
     CVODES_INTEGRATE(odes, dt, aTol, rTol, solution_arr.data(), JAC_ptr);
     toxhat(solution_arr.data(), f, nx, rusr);
 
@@ -918,22 +913,21 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             f[i] = f[i] - x[i];
     }
 
-    //If Jacobian requested: g = B * JAC * A - I
     if (need[1] == 1)
     {
-        //A = d(y0)/d(x) at ICs (ptcl from fromxhat)
+        // ic jacobian
         std::vector<double> A_diag(nx);
-        A_diag[0] = rusr[nx]; //dT/dx0
+        A_diag[0] = rusr[nx]; // dT/dx0
         for (int i = 1; i < nx; ++i)
-            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); //dYi/dx_i
+            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
 
-        //B = d(x)/d(y(t)) at final state (solution_arr)
+        // final jacobian
         std::vector<double> B_diag(nx);
-        B_diag[0] = 1.0 / rusr[nx]; //dx0/dT
+        B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
         for (int i = 1; i < nx; ++i)
-            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i])); //dx_i/dYi
+            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
 
-        //assemble (column-major)
+        // col major assembly
         for (int col = 0; col < nx; ++col)
         {
             const double Acol = A_diag[col];
@@ -941,7 +935,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             {
                 double val = B_diag[row] * JAC[row + col * nx] * Acol;
                 if (row == col)
-                    val -= 1.0; //-I from f(...)-x
+                    val -= 1.0;
                 g[row + col * nx] = val;
             }
         }
@@ -950,7 +944,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
 void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], double rusr[])
 {
-    //conserve mass and energy
+    // conserve mass and energy
     std::vector<double> Y1(nx - 1), Y2(nx - 1);
     double T1 = ptcl1[0], T2 = ptcl2[0];
     for (int i = 1; i < nx; ++i)
@@ -959,7 +953,7 @@ void mymix(int &nx, double ptcl1[], double ptcl2[], double alpha[], int iusr[], 
         Y2[i - 1] = ptcl2[i];
     }
 
-    double p = OneAtm; //or rusr[2*nx+4]
+    double p = OneAtm; // or rusr[2*nx+4]
     gas->setState_TPY(T1, p, Y1.data());
     double H1 = gas->enthalpy_mass();
     gas->setState_TPY(T2, p, Y2.data());
