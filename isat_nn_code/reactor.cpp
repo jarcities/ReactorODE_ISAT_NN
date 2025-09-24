@@ -614,7 +614,7 @@ static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
-                      double *solution, double *JAC /* = nullptr */)
+                      double *solution, double *JAC)
 {
     static SUNContext sunctx = nullptr;
     static bool initialized = false;
@@ -670,7 +670,7 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     {
         NS = (int)NEQ;
 
-        // 1) seed sensitivity ICs as identity (IC sensitivities)
+        // sensitivity = identity
         yS = N_VCloneVectorArray(NS, y);
         assert(yS);
         for (int i = 0; i < NS; ++i)
@@ -679,21 +679,20 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
             NV_Ith_S(yS[i], i) = 1.0;
         }
 
-        flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, /*fS*/ NULL, yS);
+        flag = CVodeSensInit(cvode_mem, NS, CV_SIMULTANEOUS, NULL, yS);
         assert(flag >= 0);
 
-        // 2) provide a dummy parameter vector so internal DQ path is valid
-        pvec.assign(NS, 0.0); // values don't matter (RHS ignores p)
-        pbar.assign(NS, 1.0); // scale (positive)
+        // dummy variables
+        pvec.assign(NS, 0.0);
+        pbar.assign(NS, 1.0);
         ud.p = pvec.data();
         ud.NP = NS;
+
+        // set user data/params/tolerances
         flag = CVodeSetUserData(cvode_mem, &ud);
         assert(flag >= 0);
         flag = CVodeSetSensParams(cvode_mem, ud.p, pbar.data(), /*plist*/ nullptr);
         assert(flag >= 0);
-
-        // 3) enable sensitivities with internal DQ (no custom fS)
-
         flag = CVodeSensEEtolerances(cvode_mem);
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
@@ -710,7 +709,7 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     for (sunindextype i = 0; i < NEQ; ++i)
         solution[i] = y_data[i];
 
-    // copy sensitivities (column-major): JAC[j + i*NEQ] = ∂y_j(t)/∂y0_i
+    // copy sensitivities
     if (JAC && NS > 0)
     {
         flag = CVodeGetSens(cvode_mem, &t, yS);
@@ -730,122 +729,99 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
 }
 ////////////////////////////////////////////////////////////////////////////////////////
 
-namespace Gl
-{
-    shared_ptr<Solution> sol;
-    shared_ptr<ThermoPhase> gas;
-
-    int nLayers = 6;
-    int nNeurons = 10;
-    int nx = 11;
-
-    int ia[100];
-    int ib[100];
-    int n1[100];
-    int n2[100];
-
-    double A[1000000];
-    double b[10000];
-
-    void initfgh()
-    {
-        sol = newSolution("h2o2.yaml", "ohmech", "none");
-        gas = sol->thermo();
-    }
-
-    void initfnn()
-    {
-        int i1 = 0, i2 = 0;
-        char file1[50], file2[50];
-
-        for (int ll = 1; ll <= nLayers; ll++)
-        {
-            ia[ll - 1] = i1;
-            ib[ll - 1] = i2;
-
-            sprintf(file1, "./A%d.csv", ll);
-            sprintf(file2, "./B%d.csv", ll);
-
-            n1[ll - 1] = (ll == 1) ? nx : nNeurons;
-            n2[ll - 1] = (ll == nLayers) ? nx : nNeurons;
-
-            FILE *pFile;
-            float a;
-
-            pFile = fopen(file1, "r+");
-            for (int ii = 0; ii < n1[ll - 1] * n2[ll - 1]; ii++)
-            {
-                fscanf(pFile, "%f", &a);
-                A[i1++] = a;
-            }
-            fclose(pFile);
-
-            pFile = fopen(file2, "r+");
-            for (int ii = 0; ii < n2[ll - 1]; ii++)
-            {
-                fscanf(pFile, "%f", &a);
-                b[i2++] = a;
-            }
-            fclose(pFile);
-        }
-    }
-}
-
 using namespace Gl;
 
-// helpers (same formulas you already had)
+//"custom.hpp" is the ReactorODEs class from lines 21-147 of the file "custom.cpp" which can be found
+// at this URL: https://cantera.org/3.1/examples/cxx/custom.html (retrieved 06/05/2025)
+
 void fromxhat(double x[], double ptcl[], int &nx, double rusr[])
 {
-    ptcl[0] = (x[0] * rusr[nx]) + rusr[0];
+    // this function converts the normalized vector x into temperature and mass fractions for one particle
+    // x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
+    // rusr[] are user-supplied normalization variables
+
+    ptcl[0] = (x[0] * rusr[nx]) + rusr[0]; // ptcl[0] is the temperature, in K
+
     for (int ii = 1; ii < nx; ii++)
     {
-        ptcl[ii] = rusr[ii] * std::exp(-std::log(rusr[ii]) * x[ii]) - rusr[ii];
+
+        ptcl[ii] = rusr[ii] * exp(-log(rusr[ii]) * x[ii]) - rusr[ii]; // ptcl[ii] is the mass fraction of the ii-th
+                                                                      // species in the chemical mechanism
     }
 }
 
 void toxhat(double ptcl[], double x[], int &nx, double rusr[])
 {
-    x[0] = (ptcl[0] - rusr[0]) / rusr[nx];
+    // this function converts a particle's temperature and mass fractions into the normalized vector x
+    // x[] is the input, ptcl[] is the output, nx indicates the number of dimensions of both x and ptcl
+    // rusr[] are user-supplied normalization variables
+
+    x[0] = (ptcl[0] - rusr[0]) / rusr[nx]; // x[0] is the normalized temperature
+
     for (int ii = 1; ii < nx; ii++)
     {
-        x[ii] = -std::log((ptcl[ii] + rusr[ii]) / rusr[ii]) / std::log(rusr[ii]);
+
+        x[ii] = -log((ptcl[ii] + rusr[ii]) / rusr[ii]) / log(rusr[ii]); // x[ii] is the normalized mass fraction
+                                                                        // of the ii-th species in the chemical mechanism
     }
 }
 
-double fAct(double x) { return x * std::tanh(std::log(1.0 + std::exp(x))); }
+double fAct(double x)
+{ // activation function of the hidden layers,
+  // here a Mish function is used
+
+    return x * tanh(log(1.0 + exp(x)));
+}
 
 void myfnn(int &nx, double x[], double fnn[])
 {
-    static int bbbb;
-    double x1[100], x2[100];
+    // this function evaluates f^{}
+
+    static int bbbb; // dummy variable used to call "initfnn" the first time "myfnn" is called
+
+    double x1[100];
+    double x2[100]; // work arrays
 
     if (bbbb != 7777)
     {
         Gl::initfnn();
         bbbb = 7777;
-    }
+    } // if "myfnn" is called for the first time, initialize the
+      // f^{MLP} data structure by reading in the weights
 
     for (int ii = 0; ii < n1[0]; ii++)
-        x1[ii] = x[ii];
+    {
+        x1[ii] = x[ii]; // initialize the input
+    }
 
     for (int ll = 0; ll < nLayers; ll++)
     {
+
         for (int kk = 0; kk < n2[ll]; kk++)
         {
             x2[kk] = 0.0;
             for (int jj = 0; jj < n1[ll]; jj++)
             {
-                x2[kk] += A[ia[ll] + jj + kk * n1[ll]] * x1[jj];
+                x2[kk] += A[ia[ll] + jj + kk * n1[ll]] * x1[jj]; // apply weights in a dense layer
             }
-            x2[kk] += b[ib[ll] + kk];
+            x2[kk] += b[ib[ll] + kk]; // apply the bias in a dense layer
+
             if (ll < nLayers - 1)
-                x2[kk] = fAct(x2[kk]);
+            {
+                x2[kk] = fAct(x2[kk]); // apply the activation function in the hidden layers
+            }
         }
+
         for (int kk = 0; kk < n2[ll]; kk++)
+        {
             x1[kk] = x2[kk];
+        }
     }
+
     for (int kk = 0; kk < nx; kk++)
-        fnn[kk] = x2[kk];
+    {
+        fnn[kk] = 1.0 * (x2[kk]);
+    } // pass the output
 }
 
 // myfgh is the function passed to ISAT
