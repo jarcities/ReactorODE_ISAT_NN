@@ -109,8 +109,8 @@ struct CVUserData
 ///////////////////////////////////////////////////////////////////////////
 static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
-    auto *ud = static_cast<CVUserData *>(user_data);
-    ud->odes->eval((double)t, NV_DATA_S(y), NV_DATA_S(ydot), ud->p);
+    auto *user_data = static_cast<CVUserData *>(user_data);
+    user_data->odes->eval((double)t, NV_DATA_S(y), NV_DATA_S(ydot), user_data->p);
     return 0;
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -143,8 +143,8 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     assert(flag >= 0);
 
     // set user data (ode, params, num params)
-    CVUserData ud{&odes, nullptr, 0};
-    flag = CVodeSetUserData(cvode_mem, &ud);
+    CVUserData user_data{&odes, nullptr, 0};
+    flag = CVodeSetUserData(cvode_mem, &user_data);
     assert(flag >= 0);
 
     // set max time steps
@@ -188,13 +188,13 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
         // dummy variables
         pvec.assign(NS, 0.0);
         pbar.assign(NS, 1.0);
-        ud.p = pvec.data();
-        ud.NP = NS;
+        user_data.p = pvec.data();
+        user_data.NP = NS;
 
         // set user data/params/tolerances
-        flag = CVodeSetUserData(cvode_mem, &ud);
+        flag = CVodeSetUserData(cvode_mem, &user_data);
         assert(flag >= 0);
-        flag = CVodeSetSensParams(cvode_mem, ud.p, pbar.data(), /*plist*/ nullptr);
+        flag = CVodeSetSensParams(cvode_mem, user_data.p, pbar.data(), /*plist*/ nullptr);
         assert(flag >= 0);
         flag = CVodeSensEEtolerances(cvode_mem);
         assert(flag >= 0);
