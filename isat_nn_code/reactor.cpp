@@ -339,8 +339,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // double p = rusr[2 * nx + 4];  //user-specified pressure
     int mode = iusr[0];
     // double fnn[nx]; //f^{MLP}
-    std::vector<double> solution_arr(nx, 0.0);
-    std::vector<double> JAC;
+    // std::vector<double> SOL(nx, 0.0);
+    double SOL[nx];
+    // std::vector<double> JAC;
+    // double JAC;
     double *JAC_ptr = nullptr;
 
     // init first
@@ -352,12 +354,14 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     // ic -> normalize
-    std::vector<double> ptcl(nx);
+    // std::vector<double> ptcl(nx);
+    double ptcl[nx];
     fromxhat(x, ptcl.data(), nx, rusr);
 
     // get T and Y
     double T = ptcl[0];
-    std::vector<double> Y(nx - 1);
+    // std::vector<double> Y(nx - 1);
+    double Y[nx - 1];
     for (int i = 1; i < nx; ++i)
         Y[i - 1] = ptcl[i];
 
@@ -369,14 +373,15 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // init jacobian vector
     if (need[1] == 1)
     {
-        JAC.resize(nx * nx, 0.0);
+        double JAC[nx * nx];
+        // JAC.resize(nx * nx, 0.0);
         JAC_ptr = JAC.data();
     }
 
     /////////////////////////////////////////////////////////////////////
     // integrate
-    CVODES_INTEGRATE(odes, dt, aTol, rTol, solution_arr.data(), JAC_ptr);
-    toxhat(solution_arr.data(), f, nx, rusr);
+    CVODES_INTEGRATE(odes, dt, aTol, rTol, SOL.data(), JAC_ptr);
+    toxhat(SOL.data(), f, nx, rusr);
     /////////////////////////////////////////////////////////////////////
 
     if (mode == 2)
@@ -395,16 +400,18 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     if (need[1] == 1)
     {
         // ic jacobian
-        std::vector<double> A_diag(nx);
+        // std::vector<double> A_diag(nx);
+        double A_diag[nx];
         A_diag[0] = rusr[nx]; // dT/dx0
         for (int i = 1; i < nx; ++i)
             A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
 
         // final jacobian
-        std::vector<double> B_diag(nx);
+        // std::vector<double> B_diag(nx);
+        double B_diag[nx];
         B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
         for (int i = 1; i < nx; ++i)
-            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
+            B_diag[i] = -1.0 / ((SOL[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
 
         // col major assembly
         for (int col = 0; col < nx; ++col)
