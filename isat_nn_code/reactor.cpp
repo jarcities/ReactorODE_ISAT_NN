@@ -594,26 +594,25 @@
 
 using namespace Cantera;
 
-////////////////// User data passed to RHS //////////////////
+//////////////////////
 struct CVUserData
 {
     ReactorODEs *odes;
-    sunrealtype *p; // pointer to mutable parameter array
-    int NP;         // number of parameters
+    sunrealtype *p;
+    int NP;
 };
+//////////////////////
 
-////////////////// RHS //////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
     auto *ud = static_cast<CVUserData *>(user_data);
     ud->odes->eval((double)t, NV_DATA_S(y), NV_DATA_S(ydot), ud->p);
     return 0;
 }
+///////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////
-// ---- same includes & CVUserData / RHS as you have ----
-
-// Integrates ONCE; if JAC!=nullptr, fills JAC = ∂y(t)/∂y0 (column-major)
 void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, double rTol,
                                 double *solution, double *JAC /* = nullptr */)
 {
@@ -626,11 +625,13 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
         initialized = true;
     }
 
+    //num of equations and solution vector
     const sunindextype NEQ = (sunindextype)odes.neq();
     N_Vector y = N_VNew_Serial(NEQ, sunctx);
     assert(y);
     odes.getState(NV_DATA_S(y));
 
+    //create/init SUNDIAL solver and set tolerances
     void *cvode_mem = CVodeCreate(CV_BDF, sunctx);
     assert(cvode_mem);
     int flag = CVodeInit(cvode_mem, RHS, 0.0, y);
@@ -638,16 +639,18 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     flag = CVodeSStolerances(cvode_mem, rTol, aTol);
     assert(flag >= 0);
 
-    // user-data; p will be set below if sensitivities are requested
-    CVUserData ud{&odes, /*p*/ nullptr, /*NP*/ 0};
+    //set user data (ode, params, num params)
+    CVUserData ud{&odes, nullptr, 0};
     flag = CVodeSetUserData(cvode_mem, &ud);
     assert(flag >= 0);
 
+    //set max time steps
     flag = CVodeSetMaxNumSteps(cvode_mem, 50000);
     assert(flag >= 0);
     flag = CVodeSetMaxStep(cvode_mem, dt);
     assert(flag >= 0);
 
+    //set linear solver (dense data structures)
     SUNMatrix A = SUNDenseMatrix(NEQ, NEQ, sunctx);
     assert(A);
     SUNLinearSolver LS = SUNLinSol_Dense(y, A, sunctx);
@@ -655,13 +658,13 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
     flag = CVodeSetLinearSolver(cvode_mem, LS, A);
     assert(flag >= 0);
 
-    // --- Forward sensitivities via internal DQ (fS = NULL) ---
+    //init sens stuff 
     N_Vector *yS = nullptr;
     int NS = 0;
 
-    // These must live until the integration finishes.
-    std::vector<sunrealtype> pvec; // dummy params (not used by your RHS)
-    std::vector<sunrealtype> pbar; // parameter scales
+    //dummy variables
+    std::vector<sunrealtype> pvec; 
+    std::vector<sunrealtype> pbar; 
 
     if (JAC)
     {
@@ -690,7 +693,7 @@ void CVODES_INTEGRATE_WITH_SENS(ReactorODEs &odes, double dt, double aTol, doubl
         assert(flag >= 0);
 
         // 3) enable sensitivities with internal DQ (no custom fS)
-        
+
         flag = CVodeSensEEtolerances(cvode_mem);
         assert(flag >= 0);
         flag = CVodeSetSensErrCon(cvode_mem, SUNTRUE);
