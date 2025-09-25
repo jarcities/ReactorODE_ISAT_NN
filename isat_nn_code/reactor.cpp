@@ -495,57 +495,6 @@
 //     } // pass the new temperatures and mass fractions to the output
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #include "reactor.hpp"
 #include "custom.hpp"
 #include <cassert>
@@ -657,8 +606,8 @@ struct CVUserData
 ///////////////////////////////////////////////////////////////////////////
 static int RHS(sunrealtype t, N_Vector y, N_Vector ydot, void *user_data)
 {
-    auto *ud = static_cast<CVUserData *>(user_data);
-    ud->odes->eval((double)t, NV_DATA_S(y), NV_DATA_S(ydot), ud->p);
+    auto *userData = static_cast<CVUserData *>(user_data);
+    userData->odes->eval((double)t, NV_DATA_S(y), NV_DATA_S(ydot), userData->p);
     return 0;
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -691,8 +640,8 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
     assert(flag >= 0);
 
     // set user data (ode, params, num params)
-    CVUserData ud{&odes, nullptr, 0};
-    flag = CVodeSetUserData(cvode_mem, &ud);
+    CVUserData userData{&odes, nullptr, 0};
+    flag = CVodeSetUserData(cvode_mem, &userData);
     assert(flag >= 0);
 
     // set max time steps
@@ -736,13 +685,13 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
         // dummy variables
         pvec.assign(NS, 0.0);
         pbar.assign(NS, 1.0);
-        ud.p = pvec.data();
-        ud.NP = NS;
+        userData.p = pvec.data();
+        userData.NP = NS;
 
         // set user data/params/tolerances
-        flag = CVodeSetUserData(cvode_mem, &ud);
+        flag = CVodeSetUserData(cvode_mem, &userData);
         assert(flag >= 0);
-        flag = CVodeSetSensParams(cvode_mem, ud.p, pbar.data(), /*plist*/ nullptr);
+        flag = CVodeSetSensParams(cvode_mem, userData.p, pbar.data(), /*plist*/ nullptr);
         assert(flag >= 0);
         flag = CVodeSensEEtolerances(cvode_mem);
         assert(flag >= 0);
@@ -877,17 +826,17 @@ void myfnn(int &nx, double x[], double fnn[])
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
-    // double Y[nx - 1];             //mass fraction
-    // double T[1];                  //temperature
-    // double ptcl[nx];              //particle properties
     double aTol = 1e-8;           // rusr[2*nx];
     double rTol = 1e-8;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     // double dx = rusr[2 * nx + 3]; //spatial increment in x for Jacobian evaluation
-    // double p = rusr[2 * nx + 4];  //user-specified pressure
     int mode = iusr[0];
     // double fnn[nx]; //f^{MLP}
-    std::vector<double> solution_arr(nx, 0.0);
+
+    // double SOL[nx];
+    std::vector<double> SOL(nx, 0.0);
+
+    // double JAC[nx * nx];
     std::vector<double> JAC;
     double *JAC_ptr = nullptr;
 
@@ -899,18 +848,22 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         aaaa = 7777;
     }
 
-    // ic -> normalize
+    // double ptcl[nx];              //particle properties
     std::vector<double> ptcl(nx);
+
     fromxhat(x, ptcl.data(), nx, rusr);
 
-    // get T and Y
+    // double T[1];                  //temperature
     double T = ptcl[0];
+
+    // double Y[nx - 1];             //mass fraction
     std::vector<double> Y(nx - 1);
     for (int i = 1; i < nx; ++i)
         Y[i - 1] = ptcl[i];
 
     // set state and build RHS
-    double p = rusr[2 * nx + 4];
+    double p = rusr[2 * nx + 4]; // user-specified pressure
+
     gas->setState_TPY(T, p, Y.data());
     ReactorODEs odes = ReactorODEs(sol);
 
@@ -923,8 +876,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     /////////////////////////////////////////////////////////////////////
     // integrate
-    CVODES_INTEGRATE(odes, dt, aTol, rTol, solution_arr.data(), JAC_ptr);
-    toxhat(solution_arr.data(), f, nx, rusr);
+    CVODES_INTEGRATE(odes, dt, aTol, rTol, SOL.data(), JAC_ptr);
+    toxhat(SOL.data(), f, nx, rusr);
     /////////////////////////////////////////////////////////////////////
 
     if (mode == 2)
@@ -943,16 +896,18 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     if (need[1] == 1)
     {
         // ic jacobian
+        // double A_diag[nx];
         std::vector<double> A_diag(nx);
         A_diag[0] = rusr[nx]; // dT/dx0
         for (int i = 1; i < nx; ++i)
             A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
 
         // final jacobian
+        // double B_diag[nx];
         std::vector<double> B_diag(nx);
         B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
         for (int i = 1; i < nx; ++i)
-            B_diag[i] = -1.0 / ((solution_arr[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
+            B_diag[i] = -1.0 / ((SOL[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
 
         // col major assembly
         for (int col = 0; col < nx; ++col)
