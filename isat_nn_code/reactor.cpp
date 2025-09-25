@@ -182,7 +182,7 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
             NV_Ith_S(yS[i], i) = 1.0;
         }
 
-        flag = CVodeSensInit(cvode_mem, NS, CV_STAGGERED, NULL, yS); // CV_SUMULTANEOUS or CV_STAGGERED
+        flag = CVodeSensInit(cvode_mem, NS, CV_SUMULTANEOUS, NULL, yS); // CV_SUMULTANEOUS or CV_STAGGERED
         assert(flag >= 0);
 
         // dummy variables
