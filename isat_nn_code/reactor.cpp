@@ -834,12 +834,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // double fnn[nx]; //f^{MLP}
 
     // double SOL[nx];
-    // std::vector<double> SOL(nx, 0.0);
-    std::array<double, nx> SOL = {};
+    std::vector<double> SOL(nx, 0.0);
+    // std::array<double, nx> SOL = {};
 
     // double JAC[nx * nx];
-    // std::vector<double> JAC;
-    std::array<double, nx*nx> JAC = {};
+    std::vector<double> JAC;
+    // std::array<double, nx*nx> JAC = {};
     double *JAC_ptr = nullptr;
 
     // init first
@@ -851,8 +851,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     // double ptcl[nx];              //particle properties
-    // std::vector<double> ptcl(nx);
-    std::array<double, nx> ptcl = {};
+    std::vector<double> ptcl(nx);
+    // std::array<double, nx> ptcl = {};
 
     fromxhat(x, ptcl.data(), nx, rusr);
 
@@ -860,8 +860,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T = ptcl[0];
 
     // double Y[nx - 1];             //mass fraction
-    // std::vector<double> Y(nx - 1);
-    std::array<double, nx - 1> Y = {};
+    std::vector<double> Y(nx - 1);
+    // std::array<double, nx - 1> Y = {};
     for (int i = 1; i < nx; ++i)
         Y[i - 1] = ptcl[i];
 
@@ -874,7 +874,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // init jacobian vector
     if (need[1] == 1)
     {
-        // JAC.resize(nx * nx, 0.0);
+        JAC.resize(nx * nx, 0.0);
         JAC_ptr = JAC.data();
     }
 
@@ -902,6 +902,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         // ic jacobian
         // double A_diag[nx];
         std::vector<double> A_diag(nx);
+        // std::array<double, nx> A_diag = {};
         A_diag[0] = rusr[nx]; // dT/dx0
         for (int i = 1; i < nx; ++i)
             A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
@@ -909,6 +910,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         // final jacobian
         // double B_diag[nx];
         std::vector<double> B_diag(nx);
+        // std::array<double, nx> B_diag = {};
         B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
         for (int i = 1; i < nx; ++i)
             B_diag[i] = -1.0 / ((SOL[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
