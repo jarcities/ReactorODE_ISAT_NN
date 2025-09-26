@@ -617,12 +617,15 @@ void CVODES_INTEGRATE(ReactorODEs &odes, double dt, double aTol, double rTol,
                       double *solution, double *JAC)
 {
     static SUNContext sunctx = nullptr;
-    static bool INIT = false;
-    if (!INIT)
+    static int aaaa;
+    // static bool INIT = false;
+    if (aaaa != 7777)
+    // if (!INIT)
     {
         int f = SUNContext_Create(SUN_COMM_NULL, &sunctx);
         assert(f >= 0);
-        INIT = true;
+        aaaa = 7777;
+        // INIT = true;
     }
 
     // num of equations and solution vector
