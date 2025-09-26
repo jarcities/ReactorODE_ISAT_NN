@@ -834,10 +834,12 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // double fnn[nx]; //f^{MLP}
 
     // double SOL[nx];
-    std::vector<double> SOL(nx, 0.0);
+    // std::vector<double> SOL(nx, 0.0);
+    std::array<double, nx> SOL = {};
 
     // double JAC[nx * nx];
-    std::vector<double> JAC;
+    // std::vector<double> JAC;
+    std::array<double, nx*nx> JAC = {};
     double *JAC_ptr = nullptr;
 
     // init first
@@ -849,7 +851,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     }
 
     // double ptcl[nx];              //particle properties
-    std::vector<double> ptcl(nx);
+    // std::vector<double> ptcl(nx);
+    std::array<double, nx> ptcl = {};
 
     fromxhat(x, ptcl.data(), nx, rusr);
 
@@ -857,7 +860,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double T = ptcl[0];
 
     // double Y[nx - 1];             //mass fraction
-    std::vector<double> Y(nx - 1);
+    // std::vector<double> Y(nx - 1);
+    std::array<double, nx - 1> Y = {};
     for (int i = 1; i < nx; ++i)
         Y[i - 1] = ptcl[i];
 
@@ -870,7 +874,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     // init jacobian vector
     if (need[1] == 1)
     {
-        JAC.resize(nx * nx, 0.0);
+        // JAC.resize(nx * nx, 0.0);
         JAC_ptr = JAC.data();
     }
 
