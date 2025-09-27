@@ -390,6 +390,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     toxhat(SOL.data(), f, nx, rusr);
     /////////////////////////////////////////////////////////////////////
 
+    // if ( mode==2 ){
+	// 	myfnn(nx, x, fnn); // evaluate f^{MLP}
+	// 	for (int ii=0; ii<nx; ii++){f[ii] = f[ii] - x[ii] - fnn[ii];}}
+	// 	// f(x) is the increment of x minus f^{MLP}(x)
+	// else {for (int ii=0; ii<nx; ii++){f[ii] = f[ii] - x[ii];}}
     if (mode == 2)
     {
         double fnn[100];
