@@ -397,8 +397,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 	// else {for (int ii=0; ii<nx; ii++){f[ii] = f[ii] - x[ii];}}
     if (mode == 2)
     {
-        // double fnn[100];
-        std::vector<double> fnn(nx);
+        double fnn[100];
+        // std::vector<double> fnn(100);
         myfnn(nx, x, fnn);
         for (int i = 0; i < nx; ++i)
             f[i] = f[i] - x[i] - fnn[i];
