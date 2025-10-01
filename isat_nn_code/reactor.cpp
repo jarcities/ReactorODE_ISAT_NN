@@ -414,9 +414,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     {
 
         /////////////////////////////////////////////////////////////////////
+        double J_fnn[nx * nx];
         if (mode == 2)
         {
-            double J_fnn[nx * nx];
             double dx = rusr[2 * nx + 3];
             for (int i = 0; i < nx; ++i)
             {
@@ -471,8 +471,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
                 
                 if (mode == 2)
                 {
-                    double J_fnn_temp[nx * nx] = J_fnn;
-                    g[row + col * nx] -= J_fnn_temp[row + col * nx];
+                    g[row + col * nx] -= J_fnn[row + col * nx];
                 }
             }
         }
