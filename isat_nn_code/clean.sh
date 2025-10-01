@@ -1,3 +1,2 @@
 #!/bin/bash
-rm *.o *.mod PaSR.exe *.log *.op
-rm *.exe
+rm *.o *.mod *.exe *.log *.op
