@@ -335,8 +335,9 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double aTol = 1e-8;           // rusr[2*nx];
     double rTol = 1e-8;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
-    // double dx = rusr[2 * nx + 3]; //spatial increment in x for Jacobian evaluation
     int mode = iusr[0];
+    if (mode == 2)
+        double dx = rusr[2 * nx + 3]; //spatial increment in x for Jacobian evaluation
     // double fnn[nx]; //f^{MLP}
 
     // double SOL[nx];
@@ -391,10 +392,10 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     /////////////////////////////////////////////////////////////////////
 
     // if ( mode==2 ){
-	// 	myfnn(nx, x, fnn); // evaluate f^{MLP}
-	// 	for (int ii=0; ii<nx; ii++){f[ii] = f[ii] - x[ii] - fnn[ii];}}
-	// 	// f(x) is the increment of x minus f^{MLP}(x)
-	// else {for (int ii=0; ii<nx; ii++){f[ii] = f[ii] - x[ii];}}
+    // 	myfnn(nx, x, fnn); // evaluate f^{MLP}
+    // 	for (int ii=0; ii<nx; ii++){f[ii] = f[ii] - x[ii] - fnn[ii];}}
+    // 	// f(x) is the increment of x minus f^{MLP}(x)
+    // else {for (int ii=0; ii<nx; ii++){f[ii] = f[ii] - x[ii];}}
     if (mode == 2)
     {
         double fnn[100];
@@ -411,6 +412,35 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
 
     if (need[1] == 1)
     {
+
+        /////////////////////////////////////////////////////////////////////
+        if (mode == 2)
+        {
+            double J_fnn[nx * nx];
+            for (int i = 0; i < nx; ++i)
+            {
+                double x_perturbed[nx];
+                double fnn_plus[nx];
+                double fnn_minus[nx];
+                for (int j = 0; j < nx; ++j)
+                {
+                    x_perturbed[j] = x[j];
+                }
+
+                x_perturbed[i] += dx;
+                myfnn(nx, x_perturbed, fnn_plus);
+
+                x_perturbed[i] -= 2 * dx;
+                myfnn(nx, x_perturbed, fnn_minus);
+
+                for (int j = 0; j < nx; ++j)
+                {
+                    J_fnn[j * nx + i] = (fnn_plus[j] - fnn_minus[j]) / (2 * dx);
+                }
+            }
+        }
+        /////////////////////////////////////////////////////////////////////
+
         // ic jacobian
         // double A_diag[nx];
         std::vector<double> A_diag(nx);
@@ -437,6 +467,11 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
                 if (row == col)
                     val -= 1.0;
                 g[row + col * nx] = val;
+                
+                if (mode == 2)
+                {
+                    g[row + col * nx] -= J_fnn[row + col * nx];
+                }
             }
         }
     }
