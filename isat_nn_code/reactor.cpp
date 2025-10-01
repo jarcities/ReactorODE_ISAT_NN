@@ -336,8 +336,8 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
     double rTol = 1e-8;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     int mode = iusr[0];
-    if (mode == 2)
-        double dx = rusr[2 * nx + 3]; //spatial increment in x for Jacobian evaluation
+    // if (mode == 2)
+    //     double dx = rusr[2 * nx + 3]; //spatial increment in x for Jacobian evaluation
     // double fnn[nx]; //f^{MLP}
 
     // double SOL[nx];
@@ -417,6 +417,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
         if (mode == 2)
         {
             double J_fnn[nx * nx];
+            double dx = rusr[2 * nx + 3];
             for (int i = 0; i < nx; ++i)
             {
                 double x_perturbed[nx];
