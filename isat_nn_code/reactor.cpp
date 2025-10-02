@@ -38,7 +38,7 @@ namespace Gl
     {
 
         // sol = newSolution("h2o2.yaml", "ohmech", "none"); // initialize the Cantera gas object,
-        sol = newSolution("<usc_mech_ii.yaml>", "gas", "none");
+        auto sol = newSolution("nDodecane_Reitz.yaml", "nDodecane_IG", "none"); //~100+ species
         // the inputs can be modified to change the chemical mechanism
         gas = sol->thermo();
     }
