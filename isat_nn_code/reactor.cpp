@@ -38,7 +38,7 @@ namespace Gl
     {
 
         // sol = newSolution("h2o2.yaml", "ohmech", "none"); // initialize the Cantera gas object,
-        sol = newSolution("<usc_mech_ii.yaml>", "gas", "none")
+        sol = newSolution("<usc_mech_ii.yaml>", "gas", "none");
         // the inputs can be modified to change the chemical mechanism
         gas = sol->thermo();
     }
