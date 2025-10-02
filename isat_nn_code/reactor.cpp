@@ -473,6 +473,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
                 {
                     g[row + col * nx] -= J_fnn[row + col * nx];
                 }
+                toxhat(g,g,nx,rusr);
             }
         }
     }
