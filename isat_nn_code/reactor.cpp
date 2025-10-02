@@ -410,70 +410,125 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
             f[i] = f[i] - x[i];
     }
 
+    // if (need[1] == 1)
+    // {
+
+    //     /////////////////////////////////////////////////////////////////////
+    //     double J_fnn[nx * nx];
+    //     if (mode == 2)
+    //     {
+    //         double dx = rusr[2 * nx + 3];
+    //         for (int i = 0; i < nx; ++i)
+    //         {
+    //             double x_perturbed[nx];
+    //             double fnn_plus[nx];
+    //             double fnn_minus[nx];
+    //             for (int j = 0; j < nx; ++j)
+    //             {
+    //                 x_perturbed[j] = x[j];
+    //             }
+
+    //             x_perturbed[i] += dx;
+    //             myfnn(nx, x_perturbed, fnn_plus);
+
+    //             x_perturbed[i] -= 2 * dx;
+    //             myfnn(nx, x_perturbed, fnn_minus);
+
+    //             for (int j = 0; j < nx; ++j)
+    //             {
+    //                 J_fnn[j * nx + i] = (fnn_plus[j] - fnn_minus[j]) / (2 * dx);
+    //             }
+    //         }
+    //     }
+    //     /////////////////////////////////////////////////////////////////////
+
+    //     // ic jacobian
+    //     // double A_diag[nx];
+    //     std::vector<double> A_diag(nx);
+    //     // std::array<double, nx> A_diag = {};
+    //     A_diag[0] = rusr[nx]; // dT/dx0
+    //     for (int i = 1; i < nx; ++i)
+    //         A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
+
+    //     // final jacobian
+    //     // double B_diag[nx];
+    //     std::vector<double> B_diag(nx);
+    //     // std::array<double, nx> B_diag = {};
+    //     B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
+    //     for (int i = 1; i < nx; ++i)
+    //         B_diag[i] = -1.0 / ((SOL[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
+
+    //     // col major assembly
+    //     for (int col = 0; col < nx; ++col)
+    //     {
+    //         const double Acol = A_diag[col];
+    //         for (int row = 0; row < nx; ++row)
+    //         {
+    //             double val = B_diag[row] * JAC[row + col * nx] * Acol;
+    //             if (row == col)
+    //                 val -= 1.0;
+    //             g[row + col * nx] = val;
+
+    //             if (mode == 2)
+    //             {
+    //                 g[row + col * nx] -= J_fnn[row + col * nx];
+    //             }
+    //         }
+    //     }
+    // }
     if (need[1] == 1)
     {
-
-        /////////////////////////////////////////////////////////////////////
-        double J_fnn[nx * nx];
+        std::vector<double> J_fnn;
         if (mode == 2)
         {
-            double dx = rusr[2 * nx + 3];
+            J_fnn.resize(nx * nx);
+            const double dx = rusr[2 * nx + 3];
             for (int i = 0; i < nx; ++i)
             {
                 double x_perturbed[nx];
-                double fnn_plus[nx];
-                double fnn_minus[nx];
-                for (int j = 0; j < nx; ++j)
-                {
-                    x_perturbed[j] = x[j];
-                }
+                std::copy(x, x + nx, x_perturbed);
 
                 x_perturbed[i] += dx;
+                double fnn_plus[nx];
                 myfnn(nx, x_perturbed, fnn_plus);
 
                 x_perturbed[i] -= 2 * dx;
+                double fnn_minus[nx];
                 myfnn(nx, x_perturbed, fnn_minus);
 
                 for (int j = 0; j < nx; ++j)
                 {
-                    J_fnn[j * nx + i] = (fnn_plus[j] - fnn_minus[j]) / (2 * dx);
+                    // column-major: (row=j, col=i)
+                    J_fnn[j + i * nx] = (fnn_plus[j] - fnn_minus[j]) / (2 * dx);
                 }
             }
         }
-        /////////////////////////////////////////////////////////////////////
 
-        // ic jacobian
-        // double A_diag[nx];
+        // J_in (A_diag) at y0 = ptcl
         std::vector<double> A_diag(nx);
-        // std::array<double, nx> A_diag = {};
-        A_diag[0] = rusr[nx]; // dT/dx0
+        A_diag[0] = rusr[nx];
         for (int i = 1; i < nx; ++i)
-            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]); // dYi/dx_i
+            A_diag[i] = -(ptcl[i] + rusr[i]) * std::log(rusr[i]);
 
-        // final jacobian
-        // double B_diag[nx];
+        // J_out (B_diag) at y1 = SOL
         std::vector<double> B_diag(nx);
-        // std::array<double, nx> B_diag = {};
-        B_diag[0] = 1.0 / rusr[nx]; // dx0/dT
+        B_diag[0] = 1.0 / rusr[nx];
         for (int i = 1; i < nx; ++i)
-            B_diag[i] = -1.0 / ((SOL[i] + rusr[i]) * std::log(rusr[i])); // dx_i/dYi
+            B_diag[i] = -1.0 / ((SOL[i] + rusr[i]) * std::log(rusr[i]));
 
-        // col major assembly
+        // g = J_out * JAC * J_in - I [ - J_fnn ]
         for (int col = 0; col < nx; ++col)
         {
-            const double Acol = A_diag[col];
+            const double right = A_diag[col];
             for (int row = 0; row < nx; ++row)
             {
-                double val = B_diag[row] * JAC[row + col * nx] * Acol;
+                const double left = B_diag[row];
+                double val = left * JAC[row + col * nx] * right;
                 if (row == col)
                     val -= 1.0;
-                g[row + col * nx] = val;
-                
                 if (mode == 2)
-                {
-                    g[row + col * nx] -= J_fnn[row + col * nx];
-                }
-                toxhat(g,g,nx,rusr);
+                    val -= J_fnn[row + col * nx];
+                g[row + col * nx] = val;
             }
         }
     }
