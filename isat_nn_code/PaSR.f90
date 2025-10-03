@@ -56,7 +56,7 @@ program main
   double precision, parameter :: errtol = 32e-5 ! ISAT error tolerance
   
   integer :: nx=11,nf=11,nh=1 ! dimensions of x and f (h is for an ISAT functionality which is not used here)
-  integer :: ns=10, info(100), nPtcl = 5000, idd, nSteps = 2000, counter, i1, i2 !nPtcl = 10000, idd, nSteps = 4000
+  integer :: ns=10, info(100), nPtcl = 10000, idd, nSteps = 4000, counter, i1, i2 !nPtcl = 10000, idd, nSteps = 4000
   ! ns is the number of species, nPtcl is the number of particles in the reactor, nSteps is the number of time steps
   double precision, pointer    :: x(:), ptcl1(:), ptcl2(:), rusr(:), f(:), fisat(:), fisatsum(:), fnn(:), g(:,:), h(:), ptcls(:,:), alpha(:)
   double precision :: rinfo(70), stats(100), dt, start, finish
