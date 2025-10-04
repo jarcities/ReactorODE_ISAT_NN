@@ -46,7 +46,7 @@ program main
   integer :: ii,jj,kk 
   integer :: nTest = 250 ! when storage retrieval accuracy is tested, errors are computed every nTest time steps
   
-  integer, parameter :: mode = 3
+  integer, parameter :: mode = 2
   ! mode determines the behavior of the code
   ! mode == 1 does no storage retrieval, and outputs a low number (1,000,000) of PaSR samples
   ! mode == 2 performs standard preconditioned ISAT
