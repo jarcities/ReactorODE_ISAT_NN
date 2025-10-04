@@ -434,8 +434,7 @@ void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
                 double fnn_plus[nx];
                 myfnn(nx, x_perturbed, fnn_plus);
 
-                // x_perturbed[i] -= 2 * dx;
-                x_perturbed[i] -= dx;
+                x_perturbed[i] -= 2 * dx;
                 double fnn_minus[nx];
                 myfnn(nx, x_perturbed, fnn_minus);
 
