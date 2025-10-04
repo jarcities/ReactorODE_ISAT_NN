@@ -333,8 +333,8 @@ void myfnn(int &nx, double x[], double fnn[])
 void myfgh(int need[], int &nx, double x[], int &nf, int &nh, int iusr[],
            double rusr[], double f[], double g[], double h[])
 {
-    double aTol = 1e-8;           // rusr[2*nx];
-    double rTol = 1e-8;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
+    double aTol = 1e-6;           // rusr[2*nx];
+    double rTol = 1e-6;           // rusr[2*nx+1]; //absolute and relative tolerances for the ODE integrator
     double dt = rusr[2 * nx + 2]; // time step over which to integrate
     int mode = iusr[0];
     // if (mode == 2)
